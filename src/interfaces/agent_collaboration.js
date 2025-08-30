@@ -8,7 +8,6 @@ const NutritionAgent = require('../agents/nutrition_agent');
 const WorkoutAgent = require('../agents/workout_agent');
 const AgentCollaborationSystem = require('../core/agent_collaboration');
 const ConversationManager = require('../core/conversation_manager');
-const MasterControlAgent = require('../core/master_control_agent');
 
 class EnhancedAPIServer {
   constructor(port = 3000) {
@@ -22,13 +21,6 @@ class EnhancedAPIServer {
     this.collaborationSystem = new AgentCollaborationSystem(
       this.agentRegistry, 
       this.conversationManager
-    );
-
-    // Initialize Master Control Agent (MCA)
-    this.masterControlAgent = new MasterControlAgent(
-      this.agentRegistry,
-      this.conversationManager,
-      this.collaborationSystem
     );
 
     this.setupMiddleware();
@@ -53,7 +45,7 @@ class EnhancedAPIServer {
       });
     });
 
-    // Enhanced chat endpoint with MCA orchestration
+    // Enhanced chat endpoint with collaboration detection
     this.app.post('/chat', async (req, res) => {
       try {
         const { message, agentType } = req.body;
@@ -62,19 +54,59 @@ class EnhancedAPIServer {
           return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Route through Master Control Agent for intelligent orchestration
-        console.log('🧠 Routing through Master Control Agent...');
-        const mcaResponse = await this.masterControlAgent.intelligentRouting(
+        // Step 1: Determine primary agent (via routing or explicit type)
+        const primaryAgentType = agentType || this.routeToAgent(message);
+        const primaryAgents = this.agentRegistry.getAgentsByType(primaryAgentType);
+        
+        if (primaryAgents.length === 0) {
+          return res.status(404).json({ 
+            error: `No agents of type ${primaryAgentType} available` 
+          });
+        }
+
+        // Step 2: Check if collaboration is needed
+        const collaborationNeed = this.collaborationSystem.detectCollaborationNeed(
           message, 
-          { 
-            ip: req.ip, 
-            userAgent: req.get('User-Agent'),
-            explicitAgentType: agentType,
-            timestamp: new Date().toISOString()
-          }
+          primaryAgentType
         );
 
-        res.json(mcaResponse);
+        if (collaborationNeed && collaborationNeed.confidence > 0.5) {
+          // Multi-agent collaboration required
+          console.log(`🤝 Collaboration detected: ${collaborationNeed.collaborationType}`);
+          console.log(`🎯 Primary: ${collaborationNeed.primaryAgent}, Secondary: ${collaborationNeed.secondaryAgents.join(', ')}`);
+          
+          const collaborationResult = await this.collaborationSystem.initiateAgentCollaboration(
+            collaborationNeed,
+            message,
+            { ip: req.ip, userAgent: req.get('User-Agent') }
+          );
+
+          // Return enhanced response with collaboration info
+          res.json({
+            ...collaborationResult,
+            collaboration_detected: true,
+            routing_info: {
+              selected_agent_type: collaborationNeed.primaryAgent,
+              routing_reason: 'multi_agent_collaboration',
+              collaboration_type: collaborationNeed.collaborationType,
+              participants: collaborationNeed.requiredAgents
+            }
+          });
+
+        } else {
+          // Single agent response
+          const primaryAgent = primaryAgents[0];
+          const response = await primaryAgent.processMessage({ content: message }, {});
+          
+          res.json({
+            ...response,
+            collaboration_detected: false,
+            routing_info: {
+              selected_agent_type: primaryAgentType,
+              routing_reason: agentType ? 'explicit_agent_type' : 'keyword_analysis'
+            }
+          });
+        }
 
       } catch (error) {
         console.error('Chat error:', error);
@@ -143,88 +175,25 @@ class EnhancedAPIServer {
       }
     });
 
-    // MCA-specific endpoints
-    this.app.get('/mca/status', (req, res) => {
-      const mcaInfo = this.masterControlAgent.getInfo();
-      const mcaStatus = this.masterControlAgent.getSystemStatus();
-      
-      res.json({
-        mca_info: mcaInfo,
-        system_status: mcaStatus,
-        orchestration_capabilities: {
-          intelligent_routing: true,
-          load_balancing: true,
-          collaboration_orchestration: true,
-          system_optimization: true,
-          performance_monitoring: true
-        }
-      });
-    });
-
-    this.app.get('/mca/metrics', (req, res) => {
-      const metrics = this.masterControlAgent.systemMetrics;
-      res.json({
-        system_metrics: metrics,
-        load_balancer: {
-          system_load: this.masterControlAgent.getSystemLoad(),
-          agent_queues: Array.from(this.masterControlAgent.loadBalancer.agentQueues.entries()).map(
-            ([agentId, queue]) => ({
-              agent_id: agentId,
-              queue_length: queue.length,
-              recent_requests: queue.slice(-5)
-            })
-          )
-        }
-      });
-    });
-
-    this.app.post('/mca/optimize', async (req, res) => {
-      try {
-        const { reason = 'manual_trigger' } = req.body;
-        const optimization = await this.masterControlAgent.triggerSystemOptimization(reason);
-        
-        res.json({
-          message: 'System optimization triggered',
-          optimization_id: optimization.id,
-          reason: reason,
-          timestamp: new Date().toISOString()
-        });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // System status with MCA orchestration metrics
+    // System status with collaboration stats
     this.app.get('/system/status', (req, res) => {
       const agents = this.agentRegistry.getAllAgents();
       const collaborationStats = this.collaborationSystem.getCollaborationHistory().stats;
-      const mcaStatus = this.masterControlAgent.getSystemStatus();
       
       const status = {
         totalAgents: agents.length,
         activeAgents: agents.filter(a => a.status === 'active').length,
         agentTypes: {},
-        masterControlAgent: {
-          enabled: true,
-          id: this.masterControlAgent.id,
-          system_health: mcaStatus.system_health,
-          total_requests: mcaStatus.total_requests,
-          success_rate: mcaStatus.success_rate,
-          average_response_time: mcaStatus.average_response_time,
-          system_load: mcaStatus.system_load,
-          last_optimization: mcaStatus.last_optimization
-        },
         collaborationSystem: {
           enabled: true,
           activeCollaborations: collaborationStats.activeCollaborations,
           totalCollaborations: collaborationStats.totalCollaborations,
           averageParticipants: collaborationStats.averageParticipants,
-          mostCommonType: collaborationStats.mostCommonType,
-          orchestrated_by_mca: mcaStatus.collaborations_orchestrated
+          mostCommonType: collaborationStats.mostCommonType
         },
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
-        version: '5.0.0-mca-orchestration'
+        version: '5.0.0-collaboration'
       };
 
       agents.forEach(agent => {
@@ -295,19 +264,16 @@ class EnhancedAPIServer {
     this.agentRegistry.registerAgent(workoutAgent);
 
     this.server = this.app.listen(this.port, () => {
-      console.log('🚀 Progressive Framework V5 - Master Control Agent Orchestration');
+      console.log('🚀 Progressive Framework V5 - Enhanced with Agent Collaboration');
       console.log(`   Running on port ${this.port}`);
-      console.log('   🧠 Master Control Agent: ENABLED');
       console.log('   🤖 Multi-Agent Intelligence: ENABLED');
       console.log('   🤝 Agent Collaboration: ENABLED');  
       console.log('   💬 Conversation Persistence: ENABLED');
-      console.log('   ⚖️ Load Balancing: ENABLED');
-      console.log('   📊 System Optimization: ENABLED');
       console.log('');
       console.log('📡 Available endpoints:');
       console.log(`   🏥 Health: http://localhost:${this.port}/health`);
       console.log(`   🤖 Agents: http://localhost:${this.port}/agents`);
-      console.log(`   🧠 MCA Chat: POST http://localhost:${this.port}/chat`);
+      console.log(`   💬 Smart chat: POST http://localhost:${this.port}/chat`);
       console.log(`   🎯 Direct agent: POST http://localhost:${this.port}/chat/NPA`);
       console.log(`   🤝 Collaborations: http://localhost:${this.port}/collaborations`);
       console.log(`   📊 System status: http://localhost:${this.port}/system/status`);
