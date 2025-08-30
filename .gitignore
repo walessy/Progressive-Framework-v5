@@ -35,3 +35,7 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# Real Integrations Security
+config/*.json
+!config/sample-*.json
