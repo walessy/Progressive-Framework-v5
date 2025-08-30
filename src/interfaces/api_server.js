@@ -3,6 +3,7 @@ const cors = require('cors');
 const AgentRegistry = require('../core/agent_registry');
 const BaseAgent = require('../agents/base_agent');
 const NutritionAgent = require('../agents/nutrition_agent');
+const WorkoutAgent = require('../agents/workout_agent');
 
 class APIServer {
   constructor(port = 3000) {
@@ -34,7 +35,7 @@ class APIServer {
       res.json({ 
         message: 'Progressive Framework V5 API', 
         version: '1.0.0',
-        endpoints: ['/health', '/agents', '/chat', '/system/status']
+        endpoints: ['/health', '/agents', '/chat', '/chat/:agentType', '/system/status']
       });
     });
 
@@ -44,23 +45,62 @@ class APIServer {
       res.json(agents);
     });
 
-    // Chat with an agent
-    this.app.post('/chat', async (req, res) => {
+    // Chat with specific agent type
+    this.app.post('/chat/:agentType', async (req, res) => {
       try {
-        const { message, agentType = 'NPA' } = req.body;
+        const { message } = req.body;
+        const agentType = req.params.agentType.toUpperCase();
         
         if (!message) {
           return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Get suitable agent
         const agents = this.agentRegistry.getAgentsByType(agentType);
         if (agents.length === 0) {
           return res.status(404).json({ error: 'No agents of type ' + agentType + ' available' });
         }
 
-        const agent = agents[0]; // Use first available agent
+        const agent = agents[0];
         const response = await agent.processMessage({ content: message }, {});
+        
+        res.json(response);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // Smart chat routing (auto-select best agent)
+    this.app.post('/chat', async (req, res) => {
+      try {
+        const { message } = req.body;
+        
+        if (!message) {
+          return res.status(400).json({ error: 'Message is required' });
+        }
+
+        // Simple keyword-based routing
+        const content = message.toLowerCase();
+        let selectedAgentType = 'NPA'; // Default to nutrition
+        
+        if (content.includes('workout') || content.includes('exercise') || 
+            content.includes('fitness') || content.includes('training') ||
+            content.includes('muscle') || content.includes('cardio')) {
+          selectedAgentType = 'WPA';
+        }
+
+        const agents = this.agentRegistry.getAgentsByType(selectedAgentType);
+        if (agents.length === 0) {
+          return res.status(404).json({ error: 'No suitable agents available' });
+        }
+
+        const agent = agents[0];
+        const response = await agent.processMessage({ content: message }, {});
+        
+        // Add routing info
+        response.routing_info = {
+          selected_agent_type: selectedAgentType,
+          routing_reason: 'keyword_analysis'
+        };
         
         res.json(response);
       } catch (error) {
@@ -95,13 +135,17 @@ class APIServer {
     
     // Create and register initial agents
     const nutritionAgent = new NutritionAgent();
+    const workoutAgent = new WorkoutAgent();
+    
     this.agentRegistry.registerAgent(nutritionAgent);
+    this.agentRegistry.registerAgent(workoutAgent);
 
     this.server = this.app.listen(this.port, () => {
       console.log('Progressive Framework V5 running on port ' + this.port);
       console.log('Health check: http://localhost:' + this.port + '/health');
       console.log('Agents endpoint: http://localhost:' + this.port + '/agents');
-      console.log('Chat endpoint: POST http://localhost:' + this.port + '/chat');
+      console.log('Smart chat: POST http://localhost:' + this.port + '/chat');
+      console.log('Agent-specific: POST http://localhost:' + this.port + '/chat/NPA or /chat/WPA');
     });
 
     return this.server;
