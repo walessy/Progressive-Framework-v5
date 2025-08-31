@@ -1,4 +1,4 @@
-﻿name: ðŸš€ Progressive Framework V5 CI/CD
+name: 🚀 Progressive Framework V5 CI/CD
 
 on:
   push:
@@ -14,35 +14,35 @@ env:
 
 jobs:
   test:
-    name: ðŸ§ª Run Tests & Quality Checks
+    name: 🧪 Run Tests & Quality Checks
     runs-on: ubuntu-latest
     
     steps:
-    - name: ðŸ“¥ Checkout Code
+    - name: 📥 Checkout Code
       uses: actions/checkout@v4
       
-    - name: ðŸ“¦ Setup Node.js
+    - name: 📦 Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         
-    - name: ðŸ”§ Install Dependencies
+    - name: 🔧 Install Dependencies
       run: npm ci
       
-    - name: ðŸ§ª Run Emergency System Tests
+    - name: 🧪 Run Emergency System Tests
       run: node simple-test.js
       
-    - name: ðŸ” Code Quality Check
+    - name: 🔍 Code Quality Check
       run: |
-        echo "ðŸ” Checking code structure..."
+        echo "🔍 Checking code structure..."
         test -f "src/emergency/EmergencyResponseSystem.js" || exit 1
         test -f "src/agents/MasterControlAgent.js" || exit 1
         test -f "server.js" || exit 1
-        echo "âœ… All required files present"
+        echo "✅ All required files present"
 
   build:
-    name: ðŸ—ï¸ Build & Containerize
+    name: 🏗️ Build & Containerize
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -52,17 +52,17 @@ jobs:
       packages: write
       
     steps:
-    - name: ðŸ“¥ Checkout Code
+    - name: 📥 Checkout Code
       uses: actions/checkout@v4
       
-    - name: ðŸ” Login to Container Registry
+    - name: 🔐 Login to Container Registry
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         
-    - name: ðŸ“‹ Extract Metadata
+    - name: 📋 Extract Metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
@@ -72,7 +72,7 @@ jobs:
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
           
-    - name: ðŸ—ï¸ Build and Push Docker Image
+    - name: 🏗️ Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -81,7 +81,7 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
 
   deploy-production:
-    name: ðŸŒŸ Deploy to Production
+    name: 🌟 Deploy to Production
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
@@ -91,15 +91,16 @@ jobs:
       url: https://progressive-framework.dev
       
     steps:
-    - name: ðŸ“¥ Checkout Code
+    - name: 📥 Checkout Code
       uses: actions/checkout@v4
       
-    - name: ðŸŒŸ Deploy to Production
+    - name: 🌟 Deploy to Production
       run: |
-        echo "ðŸŒŸ Deploying to production..."
-        echo "âœ… Production deployment successful"
+        echo "🌟 Deploying to production..."
+        echo "✅ Production deployment successful"
         
-    - name: ðŸ” Production Health Check
+    - name: 🔍 Production Health Check
       run: |
-        echo "ðŸ” Running production health checks..."
-        echo "âœ… Production health checks passed"
+        echo "🔍 Running production health checks..."
+        echo "✅ Production health checks passed"
+
