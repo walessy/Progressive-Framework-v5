@@ -1,243 +1,433 @@
-// Progressive Framework V5 - Enhanced Server with Memory & Actions
+// Progressive Framework V5 Server with Emergency Response System
+// Location: C:\Projects\Progressive-Framework-v5\server.js
+
 const express = require('express');
 const cors = require('cors');
+const MasterControlAgent = require('./src/agents/MasterControlAgent');
 
-// Import enhanced systems
-let MemoryEngine, ActionEngine;
-try {
-    MemoryEngine = require('./src/memoryEngine');
-    ActionEngine = require('./src/actionEngine');
-} catch (error) {
-    console.log('⚠️ Enhanced engines not found, using basic mode');
-}
+// Import emergency routes
+const createEmergencyRoutes = require('./src/api/emergencyRoutes');
 
-// Import existing agent system (with fallback)  
-let AgentRegistry, MasterControlAgent;
-try {
-    AgentRegistry = require('./src/agentRegistry');
-    MasterControlAgent = require('./src/masterControlAgent');
-} catch (error) {
-    console.log('ℹ️ Using basic agent simulation');
-}
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-
-// Initialize systems
-let memoryEngine, actionEngine, masterControlAgent;
-let enhancedMode = false;
-
-async function initializeSystem() {
-    console.log('🚀 Progressive Framework V5 Enhanced - Starting...');
-    
-    try {
-        if (MemoryEngine && ActionEngine) {
-            memoryEngine = new MemoryEngine();
-            actionEngine = new ActionEngine();
-            enhancedMode = true;
-            console.log('✅ Enhanced systems initialized');
-        }
+class ProgressiveFrameworkServer {
+    constructor() {
+        this.app = express();
+        this.port = process.env.PORT || 3000;
+        this.mca = null;
+        this.server = null;
         
-        if (MasterControlAgent && AgentRegistry) {
-            const agentRegistry = new AgentRegistry();
-            masterControlAgent = new MasterControlAgent(agentRegistry);
-            await agentRegistry.initializeRegistry();
-            await masterControlAgent.initialize();
-            console.log('✅ Agent system initialized');
-        }
-        
-        console.log(`🌟 Framework ready! Enhanced mode: ${enhancedMode ? 'ON' : 'OFF'}`);
-    } catch (error) {
-        console.log('🔄 Continuing in basic mode...');
+        this.init();
     }
-}
 
-function getUserId(req) {
-    return req.headers['x-user-id'] || req.ip.replace(/[^a-zA-Z0-9-_]/g, '_');
-}
-
-function simulateAgentResponse(message) {
-    const queryLower = message.toLowerCase();
-    
-    if (queryLower.includes('nutrition') || queryLower.includes('meal')) {
-        return {
-            response: "🥗 Nutrition Planning Agent: I can help create personalized meal plans!",
-            agent_type: "NPA"
-        };
-    } else if (queryLower.includes('workout') || queryLower.includes('fitness')) {
-        return {
-            response: "💪 Workout Planning Agent: I can design custom fitness routines!",
-            agent_type: "WPA"
-        };
-    } else if (queryLower.includes('budget') || queryLower.includes('cost')) {
-        return {
-            response: "💰 Budget Management Agent: I can help optimize your spending!",
-            agent_type: "BMA"
-        };
-    } else {
-        return {
-            response: "🤖 Progressive Framework V5: I can help with nutrition, fitness, and budget planning!",
-            agent_type: "MCA"
-        };
-    }
-}
-
-// ENHANCED CHAT ENDPOINT
-app.post('/chat', async (req, res) => {
-    try {
-        const startTime = Date.now();
-        const { message } = req.body;
-        const userId = getUserId(req);
-
-        if (!message) {
-            return res.status(400).json({ error: 'Message is required' });
-        }
-
-        console.log(`\n🧠 Processing: "${message}" (Enhanced: ${enhancedMode})`);
-
-        let response;
-
-        if (enhancedMode && memoryEngine && actionEngine) {
-            // ENHANCED MODE
-            const personalizedContext = memoryEngine.getPersonalizedContext(userId);
-            console.log(`📊 Personalization: ${Math.round(personalizedContext.personalization_level * 100)}%`);
-
-            // Get base response
-            let baseResult;
-            if (masterControlAgent) {
-                baseResult = await masterControlAgent.processMessage(message, personalizedContext);
-            } else {
-                baseResult = simulateAgentResponse(message);
-            }
-
-            // Enhance with memory
-            let enhancedResponse = memoryEngine.enhanceResponseWithMemory(
-                baseResult.response, userId, baseResult.agent_type
-            );
-
-            // Detect actions
-            const actionIntent = actionEngine.detectActionIntent(message, personalizedContext);
-            let actionResults = null;
-
-            if (actionIntent.hasActionIntent) {
-                console.log(`🎯 Actions detected: ${actionIntent.actionCount}`);
-                actionResults = await actionEngine.executeActions(actionIntent, message, personalizedContext, userId);
-                
-                if (actionResults.successful_executions > 0) {
-                    enhancedResponse += `\n\n🎯 **Actions Completed**: ${actionResults.successful_executions} action(s) executed!`;
-                }
-            }
-
-            // Learn from interaction
-            const learningData = memoryEngine.learnFromInteraction(userId, message, enhancedResponse, baseResult.agent_type);
-
-            response = {
-                ...baseResult,
-                response: enhancedResponse,
-                enhanced_mode: true,
-                memory_applied: true,
-                personalization_level: personalizedContext.personalization_level,
-                learning_data: learningData,
-                action_results: actionResults,
-                actions_executed: actionResults?.successful_executions || 0,
-                framework_version: "2.0.0 Enhanced",
-                processing_time: Date.now() - startTime
-            };
-
-        } else {
-            // BASIC MODE
-            if (masterControlAgent) {
-                response = await masterControlAgent.processMessage(message);
-            } else {
-                response = simulateAgentResponse(message);
-            }
+    async init() {
+        try {
+            // Initialize Master Control Agent with Emergency System
+            console.log('🧠 Initializing Master Control Agent with Emergency Response...');
+            this.mca = new MasterControlAgent();
             
-            response.enhanced_mode = false;
-            response.framework_version = "2.0.0 Basic";
-            response.processing_time = Date.now() - startTime;
+            // Initialize MCA (async components)
+            await this.mca.init();
+            
+            // Setup Express middleware
+            this.setupMiddleware();
+            
+            // Setup routes
+            this.setupRoutes();
+            
+            // Setup emergency-specific routes
+            this.setupEmergencyRoutes();
+            
+            // Setup error handling
+            this.setupErrorHandling();
+            
+            console.log('✅ Progressive Framework V5 server initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Server initialization failed:', error);
+            throw error;
         }
+    }
 
-        console.log(`✅ Response generated in ${response.processing_time}ms`);
-        res.json(response);
-
-    } catch (error) {
-        console.error('❌ Chat error:', error);
-        res.status(500).json({ 
-            error: 'Internal server error',
-            enhanced_mode: enhancedMode
+    setupMiddleware() {
+        this.app.use(cors());
+        this.app.use(express.json({ limit: '10mb' }));
+        this.app.use(express.urlencoded({ extended: true }));
+        
+        // Request logging with emergency context
+        this.app.use((req, res, next) => {
+            req.timestamp = Date.now();
+            req.requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            console.log(`📨 ${req.method} ${req.path} [${req.requestId}]`);
+            next();
         });
     }
-});
 
-// STATUS ENDPOINT
-app.get('/status', (req, res) => {
-    const userId = getUserId(req);
-    
-    let userContext = {};
-    let stats = {};
-    
-    if (enhancedMode && memoryEngine) {
-        userContext = memoryEngine.getPersonalizedContext(userId);
-        stats = memoryEngine.getMemoryStats();
+    setupRoutes() {
+        // ========================================
+        // ROOT ENDPOINT
+        // ========================================
+        
+        this.app.get('/', (req, res) => {
+            res.json({
+                success: true,
+                message: 'Progressive Framework V5 with Emergency Response System',
+                version: '5.0.0',
+                features: [
+                    'Multi-Agent Intelligence System',
+                    'Emergency Response & Circuit Breakers', 
+                    'System Rollback Capabilities',
+                    'Real-time Health Monitoring',
+                    'Enterprise-Grade Reliability'
+                ],
+                endpoints: {
+                    main_chat: 'POST /chat',
+                    agent_chat: 'POST /chat/:agentType',
+                    agents_list: 'GET /agents',
+                    system_status: 'GET /mca/status',
+                    system_metrics: 'GET /mca/metrics',
+                    emergency_system: 'GET /emergency/*'
+                },
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // ========================================
+        // MAIN CHAT ENDPOINTS (Enhanced with Emergency Protection)
+        // ========================================
+        
+        // Main chat endpoint with emergency protection
+        this.app.post('/chat', async (req, res) => {
+            try {
+                // Check system health before processing
+                const systemHealth = await this.mca.getSystemHealth();
+                
+                if (systemHealth.overall === 'frozen') {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'System temporarily frozen',
+                        message: 'Emergency response system has frozen the system. Please try again shortly.',
+                        system_status: systemHealth,
+                        retry_after: 30,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                const result = await this.mca.processRequest({
+                    message: req.body.message,
+                    requestId: req.requestId,
+                    timestamp: req.timestamp,
+                    endpoint: 'chat'
+                });
+                
+                res.json({
+                    success: true,
+                    data: result,
+                    request_id: req.requestId,
+                    system_health: systemHealth.overall,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                console.error(`❌ Chat request failed [${req.requestId}]:`, error);
+                
+                // Emergency system will handle the error automatically through MCA
+                res.status(500).json({
+                    success: false,
+                    error: 'Request processing failed',
+                    message: error.fallbackReason || 'An error occurred while processing your request',
+                    request_id: req.requestId,
+                    emergency_handled: true,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
+
+        // Agent-specific endpoints with circuit breaker protection
+        this.app.post('/chat/:agentType', async (req, res) => {
+            try {
+                const { agentType } = req.params;
+                
+                // Check if circuit breaker is open for this agent
+                const circuitStatus = this.mca.getCircuitBreakerStatus();
+                
+                if (circuitStatus[agentType] && !circuitStatus[agentType].healthy) {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'Agent temporarily unavailable',
+                        message: `${agentType} agent is currently unavailable due to circuit breaker protection`,
+                        circuit_breaker: circuitStatus[agentType],
+                        fallback_available: true,
+                        alternative_endpoint: '/chat',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                const result = await this.mca.processRequest({
+                    message: req.body.message,
+                    forceAgent: agentType,
+                    requestId: req.requestId,
+                    timestamp: req.timestamp,
+                    endpoint: `chat/${agentType}`
+                });
+                
+                res.json({
+                    success: true,
+                    data: result,
+                    agent: agentType,
+                    request_id: req.requestId,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                console.error(`❌ Agent ${req.params.agentType} request failed [${req.requestId}]:`, error);
+                
+                res.status(500).json({
+                    success: false,
+                    error: 'Agent request failed',
+                    message: error.message,
+                    agent: req.params.agentType,
+                    request_id: req.requestId,
+                    fallback_available: true,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
+
+        // ========================================
+        // SYSTEM INFORMATION ENDPOINTS
+        // ========================================
+
+        // Enhanced agents list endpoint
+        this.app.get('/agents', async (req, res) => {
+            try {
+                const agents = this.mca.getAgentsList();
+                const circuitStatus = this.mca.getCircuitBreakerStatus();
+                
+                // Enhance agent info with health status
+                const enhancedAgents = agents.map(agent => ({
+                    ...agent,
+                    health_status: circuitStatus[agent.type] ? 
+                        (circuitStatus[agent.type].healthy ? 'healthy' : 'unhealthy') : 'unknown',
+                    circuit_breaker: circuitStatus[agent.type] || null
+                }));
+                
+                res.json({
+                    success: true,
+                    data: {
+                        agents: enhancedAgents,
+                        total_count: enhancedAgents.length,
+                        healthy_count: enhancedAgents.filter(a => a.health_status === 'healthy').length,
+                        emergency_protection: true
+                    },
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to retrieve agents',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
+
+        // Enhanced MCA status endpoint
+        this.app.get('/mca/status', async (req, res) => {
+            try {
+                const status = await this.mca.getSystemHealth();
+                
+                res.json({
+                    success: true,
+                    data: status,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to get MCA status',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
+
+        // Enhanced metrics endpoint
+        this.app.get('/mca/metrics', async (req, res) => {
+            try {
+                const metrics = this.mca.getEnhancedMetrics();
+                
+                res.json({
+                    success: true,
+                    data: metrics,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (error) {
+                res.status(500).json({
+                    success: false,
+                    error: 'Failed to retrieve metrics',
+                    message: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
     }
 
-    res.json({
-        name: "Progressive Framework V5 Enhanced",
-        version: "2.0.0",
-        status: "operational",
-        enhanced_mode: enhancedMode,
-        agents: ["MCA", "NPA", "WPA", "BMA"],
-        user_profile: {
-            user_id: userId,
-            personalization_level: userContext.personalization_level || 0,
-            preferences_learned: Object.keys(userContext.user_preferences || {}).length
-        },
-        system_stats: stats
-    });
-});
+    setupEmergencyRoutes() {
+        // ========================================
+        // EMERGENCY RESPONSE SYSTEM ROUTES
+        // ========================================
+        
+        const emergencyRouter = createEmergencyRoutes(this.mca);
+        this.app.use('/emergency', emergencyRouter);
+        
+        console.log('🚨 Emergency Response API endpoints registered:');
+        console.log('   GET  /emergency/status         - Overall emergency system status');
+        console.log('   GET  /emergency/health         - Comprehensive health check');
+        console.log('   GET  /emergency/metrics        - Enhanced metrics with emergency data');
+        console.log('   GET  /emergency/incidents      - Active incidents');
+        console.log('   GET  /emergency/circuit-breakers - Circuit breaker status');
+        console.log('   POST /emergency/circuit-breakers/:agent/reset - Reset circuit breaker');
+        console.log('   POST /emergency/rollback       - Trigger system rollback');
+        console.log('   GET  /emergency/rollback/history - Rollback history');
+        console.log('   POST /emergency/test/error     - Test error handling');
+        console.log('   POST /emergency/test/circuit-breaker - Test circuit breaker');
+        console.log('   POST /emergency/system/freeze  - Freeze system');
+        console.log('   POST /emergency/system/unfreeze - Unfreeze system');
+    }
 
-// HEALTH CHECK
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        enhanced_mode: enhancedMode,
-        uptime: process.uptime()
-    });
-});
+    setupErrorHandling() {
+        // Global error handler with emergency system integration
+        this.app.use(async (error, req, res, next) => {
+            console.error(`🚨 Global error handler triggered [${req.requestId || 'unknown'}]:`, error);
+            
+            try {
+                // Handle error through emergency system
+                if (this.mca && this.mca.emergencyInterface) {
+                    const errorContext = {
+                        requestId: req.requestId,
+                        endpoint: req.path,
+                        method: req.method,
+                        timestamp: req.timestamp,
+                        userAgent: req.get('User-Agent'),
+                        global: true
+                    };
+                    
+                    await this.mca.emergencyInterface.handleError(error, errorContext);
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    error: 'Internal server error',
+                    message: 'An unexpected error occurred',
+                    request_id: req.requestId,
+                    emergency_handled: true,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (emergencyError) {
+                console.error('Emergency system failed to handle error:', emergencyError);
+                
+                // Fallback response
+                res.status(500).json({
+                    success: false,
+                    error: 'Critical system error',
+                    message: 'Multiple system failures detected',
+                    request_id: req.requestId,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        });
 
-// ROOT ENDPOINT
-app.get('/', (req, res) => {
-    res.json({
-        name: "Progressive Framework V5 Enhanced",
-        version: "2.0.0",
-        enhanced_mode: enhancedMode,
-        description: enhancedMode ? 
-            "AI Agent Orchestration with Memory, Learning, and Action Execution" :
-            "AI Agent Orchestration System",
-        quick_start: {
-            "Try it": "POST /chat with { \"message\": \"I'm vegetarian and prefer home workouts\" }",
-            "Check status": "GET /status"
+        // 404 handler
+        this.app.use('*', (req, res) => {
+            res.status(404).json({
+                success: false,
+                error: 'Endpoint not found',
+                message: `The endpoint ${req.method} ${req.path} does not exist`,
+                available_endpoints: {
+                    main_chat: 'POST /chat',
+                    agent_chat: 'POST /chat/:agentType (NPA, WPA, MCA)',
+                    agents_list: 'GET /agents',
+                    system_status: 'GET /mca/status',
+                    system_metrics: 'GET /mca/metrics',
+                    emergency_system: 'GET /emergency/*'
+                },
+                request_id: req.requestId,
+                timestamp: new Date().toISOString()
+            });
+        });
+    }
+
+    async start() {
+        try {
+            this.server = this.app.listen(this.port, () => {
+                console.log('🚀 Progressive Framework V5 Server Started Successfully!');
+                console.log('════════════════════════════════════════════════════════════');
+                console.log(`🌐 Server URL: http://localhost:${this.port}`);
+                console.log(`🧠 Master Control Agent: ACTIVE with Emergency Response`);
+                console.log(`🚨 Emergency System: ACTIVE`);
+                console.log(`🔌 Circuit Breakers: ACTIVE`);
+                console.log(`🔄 System Rollback: ENABLED`);
+                console.log(`❤️ Health Monitoring: ACTIVE`);
+                console.log('');
+                console.log('📡 Core API Endpoints:');
+                console.log('   Main Chat:     POST /chat');
+                console.log('   Agent Chat:    POST /chat/:agentType');
+                console.log('   Agents List:   GET /agents');
+                console.log('   System Status: GET /mca/status');
+                console.log('   System Metrics: GET /mca/metrics');
+                console.log('');
+                console.log('🚨 Emergency API Endpoints:');
+                console.log('   Emergency Status: GET /emergency/status');
+                console.log('   System Health:    GET /emergency/health');
+                console.log('   Circuit Breakers: GET /emergency/circuit-breakers');
+                console.log('   Test System:      POST /emergency/test/error');
+                console.log('   More endpoints:   GET /emergency/*');
+                console.log('');
+                console.log('🔥 Ready for production traffic with enterprise-level reliability!');
+                console.log('════════════════════════════════════════════════════════════');
+            });
+
+            // Graceful shutdown handling
+            process.on('SIGTERM', () => this.gracefulShutdown('SIGTERM'));
+            process.on('SIGINT', () => this.gracefulShutdown('SIGINT'));
+            
+        } catch (error) {
+            console.error('❌ Server startup failed:', error);
+            throw error;
         }
-    });
-});
+    }
 
-// Start server
-async function startServer() {
-    await initializeSystem();
-    
-    app.listen(PORT, () => {
-        console.log(`\n🎉 Progressive Framework V5 Enhanced - RUNNING!`);
-        console.log(`🌐 Server: http://localhost:${PORT}`);
-        console.log(`📊 Status: http://localhost:${PORT}/status`);
-        console.log(`🌟 Enhanced Mode: ${enhancedMode ? 'ENABLED' : 'DISABLED'}`);
-        console.log(`\n✨ Ready to serve requests!`);
+    async gracefulShutdown(signal) {
+        console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+        
+        if (this.server) {
+            this.server.close(() => {
+                console.log('✅ HTTP server closed');
+                
+                // Cleanup emergency system
+                if (this.mca && this.mca.emergencySystem) {
+                    console.log('🚨 Shutting down emergency response system...');
+                    // Add cleanup logic here if needed
+                }
+                
+                console.log('👋 Progressive Framework V5 shutdown complete');
+                process.exit(0);
+            });
+        }
+    }
+}
+
+// Start server if this file is run directly
+if (require.main === module) {
+    const server = new ProgressiveFrameworkServer();
+    server.start().catch(error => {
+        console.error('💥 Server failed to start:', error);
+        process.exit(1);
     });
 }
 
-startServer().catch(error => {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-});
+module.exports = ProgressiveFrameworkServer;

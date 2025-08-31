@@ -1,0 +1,54 @@
+{
+  "title": "AGENT_WPA_TO_NPA_nutrition_fitness_20250830T134729_COLLAB_1756561649974_nl72v1",
+  "type": "agent_collaboration",
+  "participants": [
+    "WPA",
+    "NPA"
+  ],
+  "originalQuery": "I need a meal plan for my strength training program",
+  "metadata": {
+    "collaborationType": "nutrition_fitness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T13:47:29.974Z",
+    "status": "active"
+  },
+  "messages": [
+    {
+      "agent": "WPA",
+      "role": "primary_analysis",
+      "content": {
+        "response": "Let me design a strength training program to help you build muscle effectively.",
+        "agent_id": "WPA_ma9d026x",
+        "agent_type": "WPA",
+        "timestamp": "2025-08-30T13:47:29.981Z",
+        "confidence": 0.85
+      },
+      "timestamp": "2025-08-30T13:47:29.981Z"
+    },
+    {
+      "agent": "NPA",
+      "role": "specialized_input",
+      "content": {
+        "response": "I can help you plan nutritious meals based on your goals and dietary requirements.",
+        "agent_id": "NPA_xniykbig",
+        "agent_type": "NPA",
+        "timestamp": "2025-08-30T13:47:29.986Z",
+        "confidence": 0.8
+      },
+      "timestamp": "2025-08-30T13:47:29.986Z"
+    },
+    {
+      "agent": "WPA",
+      "role": "final_synthesis",
+      "content": {
+        "response": "Let me design a strength training program to help you build muscle effectively.",
+        "agent_id": "WPA_ma9d026x",
+        "agent_type": "WPA",
+        "timestamp": "2025-08-30T13:47:29.990Z",
+        "confidence": 0.85
+      },
+      "timestamp": "2025-08-30T13:47:29.990Z"
+    }
+  ],
+  "updatedAt": "2025-08-30T13:47:29.990Z"
+}

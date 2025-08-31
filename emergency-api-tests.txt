@@ -1,0 +1,32 @@
+﻿# Emergency Response System API Test Examples
+# Copy and run these commands to test your emergency endpoints
+
+# 1. Check System Health
+curl -X GET http://localhost:3000/emergency/health
+
+# 2. View System Metrics
+curl -X GET http://localhost:3000/emergency/metrics
+
+# 3. Check Circuit Breakers
+curl -X GET http://localhost:3000/emergency/circuit-breakers
+
+# 4. Test Error Handling
+curl -X POST http://localhost:3000/emergency/test/error -H "Content-Type: application/json" -d "{\"error_type\": \"test_failure\", \"severity\": \"medium\"}"
+
+# 5. Test Circuit Breaker
+curl -X POST http://localhost:3000/emergency/test/circuit-breaker -H "Content-Type: application/json" -d "{\"agent\": \"NPA\", \"failure_count\": 3}"
+
+# 6. Reset Circuit Breaker
+curl -X POST http://localhost:3000/emergency/circuit-breakers/NPA/reset
+
+# 7. Trigger Emergency Rollback (CAUTION!)
+curl -X POST http://localhost:3000/emergency/rollback -H "Content-Type: application/json" -d "{\"reason\": \"manual_test\", \"max_age\": 3600000}"
+
+# 8. View Active Incidents
+curl -X GET http://localhost:3000/emergency/incidents
+
+# 9. Freeze System (CAUTION!)
+curl -X POST http://localhost:3000/emergency/system/freeze
+
+# 10. Unfreeze System
+curl -X POST http://localhost:3000/emergency/system/unfreeze

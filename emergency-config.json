@@ -1,0 +1,323 @@
+{
+  "emergency_response_config": {
+    "version": "1.0.0",
+    "last_updated": "2025-08-31",
+    
+    "system_thresholds": {
+      "error_rate_critical": 0.15,
+      "error_rate_high": 0.10,
+      "error_rate_medium": 0.05,
+      "response_time_critical": 5000,
+      "response_time_high": 3000,
+      "response_time_medium": 1000,
+      "memory_usage_critical": 0.90,
+      "memory_usage_high": 0.80,
+      "memory_usage_medium": 0.70,
+      "agent_failure_threshold": 3,
+      "system_load_threshold": 0.85
+    },
+    
+    "circuit_breaker_settings": {
+      "default": {
+        "failure_threshold": 5,
+        "timeout_ms": 30000,
+        "half_open_max_calls": 3,
+        "success_threshold_to_close": 3
+      },
+      "agents": {
+        "MCA": {
+          "failure_threshold": 3,
+          "timeout_ms": 15000,
+          "half_open_max_calls": 1,
+          "success_threshold_to_close": 1,
+          "priority": "critical"
+        },
+        "NPA": {
+          "failure_threshold": 5,
+          "timeout_ms": 30000,
+          "half_open_max_calls": 3,
+          "success_threshold_to_close": 3,
+          "priority": "high"
+        },
+        "WPA": {
+          "failure_threshold": 5,
+          "timeout_ms": 30000,
+          "half_open_max_calls": 3,
+          "success_threshold_to_close": 3,
+          "priority": "high"
+        },
+        "TEST_AGENT": {
+          "failure_threshold": 3,
+          "timeout_ms": 10000,
+          "half_open_max_calls": 2,
+          "success_threshold_to_close": 2,
+          "priority": "low"
+        }
+      }
+    },
+    
+    "incident_classification": {
+      "severity_levels": {
+        "critical": {
+          "triggers": [
+            "SYSTEM_CRASH",
+            "SecurityError",
+            "data_corruption",
+            "all_agents_down",
+            "memory_leak_critical",
+            "database_connection_lost"
+          ],
+          "auto_actions": [
+            "freeze_system",
+            "execute_rollback", 
+            "notify_admin",
+            "create_incident_report"
+          ],
+          "response_time_ms": 5000,
+          "requires_approval": false,
+          "escalation_required": true,
+          "priority": 1
+        },
+        "high": {
+          "triggers": [
+            "AGENT_FAILURE",
+            "performance_drop_50_percent",
+            "circuit_breaker_opened",
+            "memory_critical",
+            "timeout_errors_high",
+            "authentication_failures"
+          ],
+          "auto_actions": [
+            "circuit_break",
+            "fallback_mode",
+            "escalate",
+            "log_detailed"
+          ],
+          "response_time_ms": 15000,
+          "requires_approval": false,
+          "escalation_required": false,
+          "priority": 2
+        },
+        "medium": {
+          "triggers": [
+            "COMMUNICATION_ERROR",
+            "TimeoutError",
+            "optimization_failure",
+            "performance_drop_25_percent",
+            "configuration_warning",
+            "dependency_issue"
+          ],
+          "auto_actions": [
+            "retry",
+            "log_warning",
+            "monitor",
+            "adjust_parameters"
+          ],
+          "response_time_ms": 60000,
+          "requires_approval": false,
+          "escalation_required": false,
+          "priority": 3
+        },
+        "low": {
+          "triggers": [
+            "minor_inconsistency",
+            "cosmetic_issue",
+            "performance_drop_10_percent",
+            "cache_miss_high",
+            "info_level_errors"
+          ],
+          "auto_actions": [
+            "log_info",
+            "schedule_review",
+            "update_metrics"
+          ],
+          "response_time_ms": 300000,
+          "requires_approval": false,
+          "escalation_required": false,
+          "priority": 4
+        }
+      }
+    },
+    
+    "rollback_configuration": {
+      "triggers": {
+        "auto_rollback_conditions": [
+          "system_error_rate_above_15_percent",
+          "all_agents_failing",
+          "data_corruption_detected",
+          "security_breach_confirmed",
+          "critical_system_instability"
+        ],
+        "manual_approval_required": [
+          "performance_degradation_only",
+          "single_agent_failure",
+          "user_reported_issues",
+          "non_critical_errors"
+        ]
+      },
+      "state_management": {
+        "snapshot_interval_ms": 300000,
+        "max_snapshots_retained": 50,
+        "rollback_timeout_ms": 120000,
+        "validation_checks": [
+          "system_integrity",
+          "agent_connectivity",
+          "data_consistency",
+          "performance_baseline"
+        ]
+      },
+      "rollback_strategies": {
+        "immediate": {
+          "description": "Instant rollback for critical issues",
+          "max_downtime_ms": 5000,
+          "validation_level": "basic",
+          "use_cases": ["security_breach", "data_corruption"]
+        },
+        "graceful": {
+          "description": "Planned rollback with user notification",
+          "max_downtime_ms": 30000,
+          "validation_level": "comprehensive",
+          "use_cases": ["system_instability", "performance_issues"]
+        },
+        "staged": {
+          "description": "Component-by-component rollback",
+          "max_downtime_ms": 60000,
+          "validation_level": "exhaustive",
+          "use_cases": ["complex_failures", "partial_system_issues"]
+        }
+      }
+    },
+    
+    "recovery_mechanisms": {
+      "health_monitoring": {
+        "check_interval_ms": 30000,
+        "failure_detection_window_ms": 120000,
+        "recovery_validation_timeout_ms": 60000,
+        "metrics_to_monitor": [
+          "response_time",
+          "error_rate",
+          "memory_usage",
+          "cpu_usage",
+          "active_connections"
+        ]
+      },
+      "auto_recovery": {
+        "enabled": true,
+        "max_attempts": 3,
+        "backoff_strategy": "exponential",
+        "base_delay_ms": 1000,
+        "max_delay_ms": 30000,
+        "recovery_conditions": [
+          "circuit_breaker_closed",
+          "error_rate_below_threshold",
+          "system_resources_available"
+        ]
+      },
+      "failover_systems": {
+        "backup_agents": {
+          "enabled": true,
+          "priority_order": ["MCA", "NPA", "WPA"],
+          "activation_delay_ms": 5000,
+          "health_check_required": true
+        },
+        "degraded_mode": {
+          "enabled": true,
+          "fallback_responses": true,
+          "basic_functionality_only": true,
+          "user_notification": true
+        }
+      }
+    },
+    
+    "monitoring_and_alerting": {
+      "metrics_collection": {
+        "interval_ms": 10000,
+        "retention_period_hours": 168,
+        "aggregate_levels": ["1min", "5min", "1hour", "1day"],
+        "storage_location": "./data/emergency/metrics/"
+      },
+      "alert_channels": {
+        "console": {
+          "enabled": true,
+          "min_severity": "medium",
+          "format": "structured"
+        },
+        "file_logging": {
+          "enabled": true,
+          "min_severity": "low",
+          "log_rotation": true,
+          "max_file_size_mb": 100,
+          "log_location": "./logs/emergency/"
+        },
+        "webhook": {
+          "enabled": false,
+          "url": null,
+          "min_severity": "high",
+          "timeout_ms": 5000
+        },
+        "email": {
+          "enabled": false,
+          "smtp_config": null,
+          "min_severity": "critical",
+          "rate_limit_minutes": 15
+        }
+      }
+    },
+    
+    "testing_configuration": {
+      "chaos_engineering": {
+        "enabled": false,
+        "failure_injection_rate": 0.01,
+        "max_simulated_failures_per_hour": 5,
+        "allowed_environments": ["development", "testing"]
+      },
+      "emergency_drills": {
+        "enabled": true,
+        "schedule_cron": "0 2 * * 0",
+        "drill_scenarios": [
+          "agent_failure",
+          "circuit_breaker_test", 
+          "rollback_test",
+          "recovery_test",
+          "performance_degradation"
+        ],
+        "notification_required": true
+      },
+      "load_testing": {
+        "enabled": true,
+        "stress_test_frequency": "weekly",
+        "max_concurrent_requests": 1000,
+        "duration_minutes": 30
+      }
+    },
+    
+    "security_settings": {
+      "emergency_api_access": {
+        "authentication_required": false,
+        "allowed_ips": ["127.0.0.1", "localhost"],
+        "rate_limiting": {
+          "enabled": true,
+          "max_requests_per_minute": 60
+        }
+      },
+      "incident_data_retention": {
+        "retention_days": 90,
+        "encryption_enabled": false,
+        "backup_enabled": true
+      }
+    },
+    
+    "performance_settings": {
+      "emergency_response": {
+        "max_concurrent_incidents": 50,
+        "incident_processing_timeout_ms": 30000,
+        "circuit_breaker_check_interval_ms": 1000
+      },
+      "system_optimization": {
+        "garbage_collection_frequency": "auto",
+        "memory_cleanup_threshold": 0.8,
+        "log_compression_enabled": true
+      }
+    }
+  }
+}

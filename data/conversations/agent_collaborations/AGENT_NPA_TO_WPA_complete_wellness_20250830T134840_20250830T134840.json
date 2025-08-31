@@ -1,0 +1,54 @@
+{
+  "title": "AGENT_NPA_TO_WPA_complete_wellness_20250830T134840_COLLAB_1756561720775_v5uehu",
+  "type": "agent_collaboration",
+  "participants": [
+    "NPA",
+    "WPA"
+  ],
+  "originalQuery": "I need cheap healthy meals for my fitness goals",
+  "metadata": {
+    "collaborationType": "complete_wellness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T13:48:40.775Z",
+    "status": "active"
+  },
+  "messages": [
+    {
+      "agent": "NPA",
+      "role": "primary_analysis",
+      "content": {
+        "response": "I can help you plan nutritious meals based on your goals and dietary requirements.",
+        "agent_id": "NPA_xniykbig",
+        "agent_type": "NPA",
+        "timestamp": "2025-08-30T13:48:40.780Z",
+        "confidence": 0.8
+      },
+      "timestamp": "2025-08-30T13:48:40.780Z"
+    },
+    {
+      "agent": "WPA",
+      "role": "specialized_input",
+      "content": {
+        "response": "I can create personalized workout plans based on your fitness level and goals.",
+        "agent_id": "WPA_ma9d026x",
+        "agent_type": "WPA",
+        "timestamp": "2025-08-30T13:48:40.787Z",
+        "confidence": 0.85
+      },
+      "timestamp": "2025-08-30T13:48:40.787Z"
+    },
+    {
+      "agent": "NPA",
+      "role": "final_synthesis",
+      "content": {
+        "response": "I can help you plan nutritious meals based on your goals and dietary requirements.",
+        "agent_id": "NPA_xniykbig",
+        "agent_type": "NPA",
+        "timestamp": "2025-08-30T13:48:40.792Z",
+        "confidence": 0.8
+      },
+      "timestamp": "2025-08-30T13:48:40.792Z"
+    }
+  ],
+  "updatedAt": "2025-08-30T13:48:40.792Z"
+}

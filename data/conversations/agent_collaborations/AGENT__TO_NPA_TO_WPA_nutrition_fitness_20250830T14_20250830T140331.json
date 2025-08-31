@@ -1,0 +1,23 @@
+{
+  "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140331_COLLAB_1756562611031_18omsb",
+  "type": "agent_collaboration",
+  "participants": [
+    null,
+    "NPA",
+    "WPA"
+  ],
+  "originalQuery": "What proteins should I eat for muscle building and strength gains",
+  "metadata": {
+    "collaborationType": "nutrition_fitness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T14:03:31.031Z",
+    "status": "active"
+  },
+  "messages": [],
+  "id": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140331_COLLAB_1756562611031_18omsb",
+  "createdAt": "2025-08-30T14:03:31.031Z",
+  "updatedAt": "2025-08-30T14:03:31.031Z",
+  "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T14_20250830T140331.json",
+  "conversationType": "agent_collaborations",
+  "status": "active"
+}

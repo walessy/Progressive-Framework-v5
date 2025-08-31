@@ -1,0 +1,54 @@
+{
+  "title": "AGENT_NPA_TO_WPA_nutrition_fitness_20250830T134840_COLLAB_1756561720741_5nh3u7",
+  "type": "agent_collaboration",
+  "participants": [
+    "NPA",
+    "WPA"
+  ],
+  "originalQuery": "Create a complete wellness plan with nutrition and workouts",
+  "metadata": {
+    "collaborationType": "nutrition_fitness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T13:48:40.741Z",
+    "status": "active"
+  },
+  "messages": [
+    {
+      "agent": "NPA",
+      "role": "primary_analysis",
+      "content": {
+        "response": "I specialize in creating personalized nutrition plans. What are your specific goals?",
+        "agent_id": "NPA_xniykbig",
+        "agent_type": "NPA",
+        "timestamp": "2025-08-30T13:48:40.747Z",
+        "confidence": 0.8
+      },
+      "timestamp": "2025-08-30T13:48:40.747Z"
+    },
+    {
+      "agent": "WPA",
+      "role": "specialized_input",
+      "content": {
+        "response": "I can create personalized workout plans based on your fitness level and goals.",
+        "agent_id": "WPA_ma9d026x",
+        "agent_type": "WPA",
+        "timestamp": "2025-08-30T13:48:40.752Z",
+        "confidence": 0.85
+      },
+      "timestamp": "2025-08-30T13:48:40.752Z"
+    },
+    {
+      "agent": "NPA",
+      "role": "final_synthesis",
+      "content": {
+        "response": "I specialize in creating personalized nutrition plans. What are your specific goals?",
+        "agent_id": "NPA_xniykbig",
+        "agent_type": "NPA",
+        "timestamp": "2025-08-30T13:48:40.756Z",
+        "confidence": 0.8
+      },
+      "timestamp": "2025-08-30T13:48:40.756Z"
+    }
+  ],
+  "updatedAt": "2025-08-30T13:48:40.756Z"
+}

@@ -1,0 +1,23 @@
+{
+  "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T135904_COLLAB_1756562344538_imhfy2",
+  "type": "agent_collaboration",
+  "participants": [
+    null,
+    "NPA",
+    "WPA"
+  ],
+  "originalQuery": "I need a meal plan for my strength training program",
+  "metadata": {
+    "collaborationType": "nutrition_fitness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T13:59:04.538Z",
+    "status": "active"
+  },
+  "messages": [],
+  "id": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T135904_COLLAB_1756562344538_imhfy2",
+  "createdAt": "2025-08-30T13:59:04.538Z",
+  "updatedAt": "2025-08-30T13:59:04.538Z",
+  "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T13_20250830T135904.json",
+  "conversationType": "agent_collaborations",
+  "status": "active"
+}

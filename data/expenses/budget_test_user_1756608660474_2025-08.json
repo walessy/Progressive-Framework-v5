@@ -1,0 +1,36 @@
+{
+  "userId": "budget_test_user_1756608660474",
+  "month": "2025-08",
+  "expenses": [
+    {
+      "id": "exp_1756608660611_imz75b43p",
+      "userId": "budget_test_user_1756608660474",
+      "amount": 15.5,
+      "category": "nutrition",
+      "subcategory": "groceries",
+      "description": "Lentils and quinoa bulk purchase",
+      "date": "2025-08-31T02:51:00.611Z",
+      "tags": []
+    },
+    {
+      "id": "exp_1756608660624_v5o43717w",
+      "userId": "budget_test_user_1756608660474",
+      "amount": 25,
+      "category": "fitness",
+      "subcategory": "equipment",
+      "description": "Resistance bands set",
+      "date": "2025-08-31T02:51:00.624Z",
+      "tags": []
+    },
+    {
+      "id": "exp_1756608660637_i7benwzpq",
+      "userId": "budget_test_user_1756608660474",
+      "amount": 8.75,
+      "category": "nutrition",
+      "subcategory": "supplements",
+      "description": "Plant-based protein powder",
+      "date": "2025-08-31T02:51:00.637Z",
+      "tags": []
+    }
+  ]
+}

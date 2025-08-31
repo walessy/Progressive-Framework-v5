@@ -1,0 +1,69 @@
+[
+  {
+    "id": "msg_1756587777220_s3wfgg12n",
+    "userId": "test_user",
+    "sessionId": "default",
+    "message": "Hi! I'm vegetarian and want home workouts with a  budget",
+    "response": "💪 Workout Planning Agent: Perfect for home workouts! I can help you create a personalized workout routine. What specific fitness goals would you like to focus on?",
+    "timestamp": "2025-08-30T21:02:57.220Z",
+    "insights": {
+      "userPreferences": {
+        "diet": "vegetarian",
+        "workoutLocation": "home"
+      },
+      "contextItems": [],
+      "pastSimilarMessages": [],
+      "learningData": {}
+    }
+  },
+  {
+    "id": "msg_1756587857598_ui1m4fhsk",
+    "userId": "test_user",
+    "sessionId": "default",
+    "message": "What vegetarian proteins are good for muscle building?",
+    "response": "🤖 Master Control Agent: Based on what I've learned about your preferences, I'm here to help with fitness, nutrition, and budget planning. How can I assist you today?",
+    "timestamp": "2025-08-30T21:04:17.598Z",
+    "insights": {
+      "userPreferences": {
+        "diet": "vegetarian",
+        "workoutLocation": "home",
+        "goal": "muscle_building"
+      },
+      "contextItems": [],
+      "pastSimilarMessages": [],
+      "learningData": {
+        "totalConversations": 1,
+        "knownPreferences": [
+          "diet",
+          "workoutLocation"
+        ],
+        "identifiedGoals": 0
+      }
+    }
+  },
+  {
+    "id": "msg_1756589481159_9qsuqoyh8",
+    "userId": "test_user",
+    "sessionId": "default",
+    "message": "What vegetarian proteins are good for muscle building?",
+    "response": "🥗 Nutrition Planning Agent: Excellent vegetarian nutrition focus! For vegetarian muscle-building proteins, I recommend: **quinoa** (complete protein), **lentils** (18g per cup), **chickpeas**, **tofu**, **tempeh**, **Greek yogurt**, **nuts**, and **seeds**. For muscle building, aim for 1.6-2.2g protein per kg body weight daily. Building on our previous discussion about dietary preferences, What specific nutritional goals would you like to focus on?",
+    "timestamp": "2025-08-30T21:31:21.159Z",
+    "insights": {
+      "userPreferences": {
+        "diet": "vegetarian",
+        "goal": "muscle_building"
+      },
+      "contextItems": [
+        "dietary preferences"
+      ],
+      "pastSimilarMessages": [
+        {
+          "message": "What vegetarian proteins are good for muscle building?...",
+          "timestamp": "2025-08-30T21:04:17.598Z",
+          "similarity": 1
+        }
+      ],
+      "learningData": {}
+    }
+  }
+]

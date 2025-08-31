@@ -1,0 +1,23 @@
+{
+  "title": "AGENT__TO_NPA_TO_WPA_complete_wellness_20250830T135708_COLLAB_1756562228120_0beo6m",
+  "type": "agent_collaboration",
+  "participants": [
+    null,
+    "NPA",
+    "WPA"
+  ],
+  "originalQuery": "Create a comprehensive wellness plan with nutrition, workouts, and budget considerations",
+  "metadata": {
+    "collaborationType": "complete_wellness",
+    "initiatedBy": "system_auto",
+    "timestamp": "2025-08-30T13:57:08.120Z",
+    "status": "active"
+  },
+  "messages": [],
+  "id": "AGENT__TO_NPA_TO_WPA_complete_wellness_20250830T135708_COLLAB_1756562228120_0beo6m",
+  "createdAt": "2025-08-30T13:57:08.120Z",
+  "updatedAt": "2025-08-30T13:57:08.120Z",
+  "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_complete_wellness_20250830T13_20250830T135708.json",
+  "conversationType": "agent_collaborations",
+  "status": "active"
+}

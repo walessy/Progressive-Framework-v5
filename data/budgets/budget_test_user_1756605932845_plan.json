@@ -1,0 +1,36 @@
+{
+  "userId": "budget_test_user_1756605932845",
+  "created": "2025-08-31T02:05:32.984Z",
+  "totalBudget": 75,
+  "timeframe": "weekly",
+  "preferences": {
+    "diet": "vegetarian",
+    "fitnessLevel": "beginner",
+    "goals": [
+      {
+        "type": "budget_optimization",
+        "description": "Optimize budget and save money"
+      }
+    ]
+  },
+  "allocation": {
+    "fitness": 23,
+    "nutrition": 44,
+    "health": 8
+  },
+  "recommendations": {
+    "fitness": [
+      "Adjustable dumbbells ($60-80)",
+      "Pull-up bar ($25)",
+      "Yoga mat ($20)",
+      "Basic home gym setup"
+    ],
+    "nutrition": [
+      "Bulk dried beans and lentils ($2-3/lb)",
+      "Quinoa for complete protein ($4-5/lb)",
+      "Seasonal vegetables",
+      "Plant-based protein powder ($30-40/month)"
+    ],
+    "health": []
+  }
+}

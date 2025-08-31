@@ -1,0 +1,285 @@
+[
+  {
+    "id": "1756610525702-mqz4nyvwv",
+    "timestamp": 1756610525702,
+    "error": {
+      "message": "SYSTEM_CRASH",
+      "stack": "Error: SYSTEM_CRASH\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:40:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610525713-hndn0i714",
+    "timestamp": 1756610525713,
+    "error": {
+      "message": "AGENT_FAILURE",
+      "stack": "Error: AGENT_FAILURE\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:41:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610525727-1g4qki18m",
+    "timestamp": 1756610525727,
+    "error": {
+      "message": "COMMUNICATION_ERROR",
+      "stack": "Error: COMMUNICATION_ERROR\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:42:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610658165-to71h2oaw",
+    "timestamp": 1756610658165,
+    "error": {
+      "message": "SYSTEM_CRASH",
+      "stack": "Error: SYSTEM_CRASH\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:40:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610658176-gsq350248",
+    "timestamp": 1756610658176,
+    "error": {
+      "message": "AGENT_FAILURE",
+      "stack": "Error: AGENT_FAILURE\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:41:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610658185-ii7t9cc9k",
+    "timestamp": 1756610658185,
+    "error": {
+      "message": "COMMUNICATION_ERROR",
+      "stack": "Error: COMMUNICATION_ERROR\n    at runEmergencyTests (C:\\Projects\\Progressive-Framework-v5\\test-emergency.js:42:22)",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610689684-3z0vjlc5r",
+    "timestamp": 1756610689684,
+    "error": {
+      "message": "Test error for emergency system",
+      "stack": "Error: Test error for emergency system\n    at testEmergencySystem (C:\\Projects\\Progressive-Framework-v5\\simple-test.js:42:27)",
+      "code": "TEST_ERROR",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756610815842-1l0xhpgx0",
+    "timestamp": 1756610815842,
+    "error": {
+      "message": "Test error for emergency system",
+      "stack": "Error: Test error for emergency system\n    at testEmergencySystem (C:\\Projects\\Progressive-Framework-v5\\simple-test.js:42:27)",
+      "code": "TEST_ERROR",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756611016641-rfxq5dvdq",
+    "timestamp": 1756611016641,
+    "error": {
+      "message": "Test error: test_failure",
+      "stack": "TestError: Test error: test_failure\n    at C:\\Projects\\Progressive-Framework-v5\\src\\api\\emergencyRoutes.js:238:31\n    at Layer.handle [as handle_request] (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\index.js:284:15\n    at Function.process_params (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at Function.handle (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Projects\\Progressive-Framework-v5\\node_modules\\express\\lib\\router\\index.js:47:12)",
+      "code": "TEST_FAILURE",
+      "name": "TestError"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "severity": "medium",
+      "testMode": true,
+      "triggeredBy": "api",
+      "timestamp": 1756611016640
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756611822783-xc3klbkos",
+    "timestamp": 1756611822783,
+    "error": {
+      "message": "Test error for emergency system",
+      "stack": "Error: Test error for emergency system\n    at testEmergencySystem (C:\\Projects\\Progressive-Framework-v5\\simple-test.js:42:27)",
+      "code": "TEST_ERROR",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  },
+  {
+    "id": "1756611960141-wuu3g41lg",
+    "timestamp": 1756611960141,
+    "error": {
+      "message": "Test error for emergency system",
+      "stack": "Error: Test error for emergency system\n    at testEmergencySystem (C:\\Projects\\Progressive-Framework-v5\\simple-test.js:42:27)",
+      "code": "TEST_ERROR",
+      "name": "Error"
+    },
+    "classification": {
+      "severity": "low",
+      "type": "unknown_error",
+      "impact": "medium",
+      "containable": true,
+      "rollbackRequired": false,
+      "affectedComponents": [
+        "unknown"
+      ]
+    },
+    "context": {
+      "testMode": true
+    },
+    "status": "open",
+    "responseActions": [],
+    "resolution": null
+  }
+]

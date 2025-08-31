@@ -1,1103 +1,1096 @@
-// Budget Management Agent (BMA) - Complete Implementation
-// Location: C:\Projects\Progressive-Framework-v5\src\agents\BudgetManagementAgent.js
+// Progressive Framework V5 - Enhanced Budget Management Agent
+// Option 4: Complete Financial Ecosystem Integration
 
-const BaseAgent = require('./BaseAgent');
 const fs = require('fs').promises;
 const path = require('path');
 
-class BudgetManagementAgent extends BaseAgent {
+class EnhancedBudgetManagementAgent {
     constructor() {
-        super('BMA');
-        this.budgetDataPath = path.join(__dirname, '../../data/budgets');
-        this.expenseCategories = this.initializeExpenseCategories();
-        this.budgetingStrategies = this.initializeBudgetingStrategies();
-        this.financialGoals = new Map();
-        this.expenseTracking = new Map();
+        this.agentName = 'Budget Management Agent';
+        this.agentCode = 'BMA';
+        this.version = '5.0.0';
         
-        this.init();
-    }
-
-    async init() {
-        try {
-            await fs.mkdir(this.budgetDataPath, { recursive: true });
-            await this.loadExistingBudgets();
-            console.log('Budget Management Agent (BMA) initialized successfully');
-        } catch (error) {
-            console.error('BMA initialization failed:', error);
-        }
-    }
-
-    // ========================================
-    // MAIN PROCESSING METHOD
-    // ========================================
-
-    async processRequest(request, context = {}) {
-        const startTime = Date.now();
+        // Financial data storage
+        this.budgetProfiles = new Map();
+        this.expenseHistory = new Map();
+        this.budgetPlans = new Map();
+        this.savingGoals = new Map();
         
-        try {
-            // Analyze budget-related intent
-            const analysis = this.analyzeBudgetIntent(request);
-            
-            // Determine specific budget action
-            const action = this.determineBudgetAction(analysis, context);
-            
-            // Execute the appropriate budget function
-            let response;
-            
-            switch (action.type) {
-                case 'create_budget':
-                    response = await this.createBudget(action.params, context.userId);
-                    break;
-                case 'track_expense':
-                    response = await this.trackExpense(action.params, context.userId);
-                    break;
-                case 'budget_analysis':
-                    response = await this.analyzeBudget(action.params, context.userId);
-                    break;
-                case 'savings_goal':
-                    response = await this.manageSavingsGoal(action.params, context.userId);
-                    break;
-                case 'expense_categorization':
-                    response = await this.categorizeExpenses(action.params, context.userId);
-                    break;
-                case 'financial_advice':
-                    response = await this.provideFinancialAdvice(action.params, context);
-                    break;
-                case 'budget_comparison':
-                    response = await this.compareBudgets(action.params, context.userId);
-                    break;
-                case 'cost_optimization':
-                    response = await this.optimizeCosts(action.params, context);
-                    break;
-                default:
-                    response = await this.provideGeneralBudgetGuidance(request, context);
+        // Budget categories and tracking
+        this.budgetCategories = {
+            fitness: {
+                name: 'Fitness & Equipment',
+                subcategories: ['gym_membership', 'home_equipment', 'workout_clothes', 'supplements']
+            },
+            nutrition: {
+                name: 'Food & Nutrition',
+                subcategories: ['groceries', 'supplements', 'meal_prep', 'dining_out']
+            },
+            health: {
+                name: 'Health & Wellness',
+                subcategories: ['medical', 'supplements', 'health_apps', 'wellness_services']
+            },
+            general: {
+                name: 'General Health Spending',
+                subcategories: ['miscellaneous', 'emergency_health']
             }
-
-            return {
-                content: response.content,
-                confidence: response.confidence || 0.8,
-                success: true,
-                metadata: {
-                    action: action.type,
-                    analysisResults: analysis,
-                    processingTime: Date.now() - startTime,
-                    budgetDataUpdated: response.dataUpdated || false
-                }
-            };
-
-        } catch (error) {
-            console.error('BMA processing error:', error);
-            
-            return {
-                content: "I encountered an issue with your budget request. Let me provide some general financial guidance instead.",
-                confidence: 0.3,
-                success: false,
-                error: error.message,
-                metadata: {
-                    processingTime: Date.now() - startTime
-                }
-            };
-        }
-    }
-
-    // ========================================
-    // BUDGET CREATION & MANAGEMENT
-    // ========================================
-
-    async createBudget(params, userId) {
-        try {
-            const budgetData = {
-                id: this.generateBudgetId(),
-                userId,
-                name: params.budgetName || `Budget ${new Date().toISOString().split('T')[0]}`,
-                period: params.period || 'monthly', // monthly, weekly, yearly
-                totalBudget: params.totalBudget || 0,
-                categories: this.createBudgetCategories(params),
-                createdAt: new Date().toISOString(),
-                status: 'active',
-                settings: {
-                    alertThreshold: params.alertThreshold || 80, // Alert when 80% spent
-                    autoSave: params.autoSave || false,
-                    trackingEnabled: true
-                }
-            };
-
-            // Save budget data
-            await this.saveBudgetData(budgetData);
-
-            // Generate budget analysis
-            const analysis = this.analyzeBudgetStructure(budgetData);
-
-            return {
-                content: this.formatBudgetCreationResponse(budgetData, analysis),
-                confidence: 0.9,
-                dataUpdated: true,
-                budgetId: budgetData.id
-            };
-
-        } catch (error) {
-            throw new Error(`Budget creation failed: ${error.message}`);
-        }
-    }
-
-    createBudgetCategories(params) {
-        const categories = {};
-        
-        // Default categories with percentages if no specific allocation provided
-        const defaultAllocations = {
-            housing: 30, // 30% of budget
-            food: 15,
-            transportation: 15,
-            utilities: 10,
-            entertainment: 10,
-            savings: 10,
-            healthcare: 5,
-            other: 5
         };
-
-        const totalBudget = params.totalBudget || 0;
         
-        if (params.customCategories) {
-            // Use custom categories if provided
-            Object.entries(params.customCategories).forEach(([category, amount]) => {
-                categories[category] = {
-                    budgetAmount: amount,
-                    spentAmount: 0,
-                    transactions: [],
-                    percentage: totalBudget > 0 ? (amount / totalBudget * 100).toFixed(1) : 0
-                };
-            });
-        } else {
-            // Use default allocation
-            Object.entries(defaultAllocations).forEach(([category, percentage]) => {
-                const amount = totalBudget * (percentage / 100);
-                categories[category] = {
-                    budgetAmount: amount,
-                    spentAmount: 0,
-                    transactions: [],
-                    percentage: percentage
-                };
-            });
-        }
-
-        return categories;
+        // Cost optimization rules and recommendations
+        this.costOptimizationRules = new Map();
+        this.financialInsights = new Map();
+        
+        // Integration with other agents
+        this.nutritionIntegration = true;
+        this.workoutIntegration = true;
+        
+        this.initialized = false;
     }
 
-    // ========================================
-    // EXPENSE TRACKING
-    // ========================================
-
-    async trackExpense(params, userId) {
+    async initialize() {
+        console.log('💰 Initializing Enhanced Budget Management Agent...');
+        
         try {
-            const expense = {
-                id: this.generateExpenseId(),
-                userId,
-                amount: params.amount,
-                category: params.category || 'other',
-                description: params.description || 'Expense',
-                date: params.date || new Date().toISOString(),
-                paymentMethod: params.paymentMethod || 'unknown',
-                tags: params.tags || [],
-                recurring: params.recurring || false
-            };
-
-            // Get user's active budget
-            const activeBudget = await this.getActiveBudget(userId);
+            // Create budget data directories
+            await fs.mkdir('data/budgets', { recursive: true });
+            await fs.mkdir('data/expenses', { recursive: true });
+            await fs.mkdir('data/financial_plans', { recursive: true });
             
-            if (activeBudget) {
-                // Update budget with expense
-                await this.updateBudgetWithExpense(activeBudget, expense);
-                
-                // Check for budget alerts
-                const alerts = this.checkBudgetAlerts(activeBudget);
-                
-                return {
-                    content: this.formatExpenseTrackingResponse(expense, activeBudget, alerts),
-                    confidence: 0.9,
-                    dataUpdated: true,
-                    alerts: alerts
-                };
-            } else {
-                // Store expense without budget
-                await this.storeStandaloneExpense(expense);
-                
-                return {
-                    content: `Expense of $${expense.amount} tracked for ${expense.category}. Consider creating a budget to better manage your finances!`,
-                    confidence: 0.7,
-                    dataUpdated: true,
-                    suggestion: 'create_budget'
-                };
-            }
-
+            // Load existing budget data
+            await this.loadBudgetData();
+            
+            // Initialize cost optimization rules
+            this.initializeCostOptimization();
+            
+            this.initialized = true;
+            console.log('✅ Enhanced Budget Management Agent ready');
+            
         } catch (error) {
-            throw new Error(`Expense tracking failed: ${error.message}`);
+            console.error('❌ BMA initialization error:', error);
+            throw error;
         }
     }
 
-    async updateBudgetWithExpense(budget, expense) {
-        // Add expense to appropriate category
-        if (!budget.categories[expense.category]) {
-            // Create new category if it doesn't exist
-            budget.categories[expense.category] = {
-                budgetAmount: 0,
-                spentAmount: 0,
-                transactions: [],
-                percentage: 0
-            };
-        }
-
-        const category = budget.categories[expense.category];
-        category.spentAmount += expense.amount;
-        category.transactions.push(expense);
-
-        // Update budget timestamp
-        budget.lastUpdated = new Date().toISOString();
-
-        // Save updated budget
-        await this.saveBudgetData(budget);
-    }
-
-    // ========================================
-    // BUDGET ANALYSIS
-    // ========================================
-
-    async analyzeBudget(params, userId) {
+    async loadBudgetData() {
         try {
-            const budget = params.budgetId 
-                ? await this.getBudgetById(params.budgetId, userId)
-                : await this.getActiveBudget(userId);
-
-            if (!budget) {
-                return {
-                    content: "I couldn't find a budget to analyze. Let's create one first!",
-                    confidence: 0.5,
-                    suggestion: 'create_budget'
-                };
+            // Load existing budget profiles
+            const budgetFiles = await fs.readdir('data/budgets');
+            let loadedProfiles = 0;
+            
+            for (const file of budgetFiles) {
+                if (file.endsWith('.json')) {
+                    const filePath = path.join('data/budgets', file);
+                    const content = await fs.readFile(filePath, 'utf8');
+                    const budgetData = JSON.parse(content);
+                    
+                    this.budgetProfiles.set(budgetData.userId, budgetData);
+                    loadedProfiles++;
+                }
             }
-
-            const analysis = this.performBudgetAnalysis(budget);
-            const recommendations = this.generateBudgetRecommendations(analysis, budget);
-            const insights = this.generateBudgetInsights(budget);
-
-            return {
-                content: this.formatBudgetAnalysisResponse(analysis, recommendations, insights),
-                confidence: 0.9,
-                analysisData: analysis,
-                recommendations: recommendations
-            };
-
+            
+            // Load expense history
+            const expenseFiles = await fs.readdir('data/expenses');
+            let loadedExpenses = 0;
+            
+            for (const file of expenseFiles) {
+                if (file.endsWith('.json')) {
+                    const filePath = path.join('data/expenses', file);
+                    const content = await fs.readFile(filePath, 'utf8');
+                    const expenseData = JSON.parse(content);
+                    
+                    if (!this.expenseHistory.has(expenseData.userId)) {
+                        this.expenseHistory.set(expenseData.userId, []);
+                    }
+                    this.expenseHistory.get(expenseData.userId).push(...expenseData.expenses);
+                    loadedExpenses++;
+                }
+            }
+            
+            console.log(`💰 Loaded ${loadedProfiles} budget profiles and ${loadedExpenses} expense records`);
+            
         } catch (error) {
-            throw new Error(`Budget analysis failed: ${error.message}`);
+            console.log('📝 Starting with fresh budget data');
         }
     }
 
-    performBudgetAnalysis(budget) {
-        const analysis = {
-            totalBudget: budget.totalBudget,
-            totalSpent: 0,
-            remainingBudget: 0,
-            percentageUsed: 0,
-            categoryAnalysis: {},
-            overBudgetCategories: [],
-            underBudgetCategories: [],
-            timeAnalysis: this.analyzeSpendingOverTime(budget)
-        };
-
-        // Analyze each category
-        Object.entries(budget.categories).forEach(([categoryName, categoryData]) => {
-            const categoryAnalysis = {
-                budgeted: categoryData.budgetAmount,
-                spent: categoryData.spentAmount,
-                remaining: categoryData.budgetAmount - categoryData.spentAmount,
-                percentageUsed: categoryData.budgetAmount > 0 
-                    ? (categoryData.spentAmount / categoryData.budgetAmount * 100).toFixed(1)
-                    : 0,
-                transactionCount: categoryData.transactions.length,
-                averageTransaction: categoryData.transactions.length > 0
-                    ? (categoryData.spentAmount / categoryData.transactions.length).toFixed(2)
-                    : 0
-            };
-
-            analysis.categoryAnalysis[categoryName] = categoryAnalysis;
-            analysis.totalSpent += categoryData.spentAmount;
-
-            // Identify over/under budget categories
-            if (categoryData.spentAmount > categoryData.budgetAmount) {
-                analysis.overBudgetCategories.push({
-                    category: categoryName,
-                    overage: categoryData.spentAmount - categoryData.budgetAmount,
-                    percentageOver: categoryAnalysis.percentageUsed
-                });
-            } else if (categoryData.spentAmount < categoryData.budgetAmount * 0.5) {
-                analysis.underBudgetCategories.push({
-                    category: categoryName,
-                    underAmount: categoryData.budgetAmount - categoryData.spentAmount,
-                    percentageUsed: categoryAnalysis.percentageUsed
-                });
-            }
+    initializeCostOptimization() {
+        // Fitness cost optimization rules
+        this.costOptimizationRules.set('fitness_beginner', {
+            maxBudget: 50,
+            recommendations: [
+                'Start with bodyweight exercises (free)',
+                'Use resistance bands ($15-25)',
+                'Try free YouTube workout videos',
+                'Consider used equipment marketplace'
+            ],
+            costSavings: '80-90% vs gym membership'
         });
 
-        analysis.remainingBudget = budget.totalBudget - analysis.totalSpent;
-        analysis.percentageUsed = budget.totalBudget > 0 
-            ? (analysis.totalSpent / budget.totalBudget * 100).toFixed(1)
-            : 0;
+        this.costOptimizationRules.set('fitness_intermediate', {
+            maxBudget: 150,
+            recommendations: [
+                'Home gym setup: adjustable dumbbells ($50-80)',
+                'Pull-up bar ($20-30)',
+                'Yoga mat ($15-25)',
+                'Basic equipment over gym membership'
+            ],
+            costSavings: '60-70% vs premium gym'
+        });
 
-        return analysis;
+        // Nutrition cost optimization rules
+        this.costOptimizationRules.set('nutrition_vegetarian_budget', {
+            maxBudget: 50,
+            recommendations: [
+                'Bulk dried beans and lentils ($2-3/lb)',
+                'Brown rice in bulk ($1.50/lb)',
+                'Seasonal vegetables',
+                'Protein powder for convenience ($30-40/month)'
+            ],
+            costSavings: '40-50% vs meat-based diet'
+        });
+
+        this.costOptimizationRules.set('nutrition_muscle_building', {
+            maxBudget: 80,
+            recommendations: [
+                'Greek yogurt in bulk ($15-20/week)',
+                'Quinoa and lentil combinations',
+                'Peanut butter for calories ($5-8/jar)',
+                'Seasonal protein-rich vegetables'
+            ],
+            costSavings: '30-40% vs pre-made protein foods'
+        });
     }
 
     // ========================================
-    // SAVINGS GOALS MANAGEMENT
+    // BUDGET PLANNING AND ANALYSIS
     // ========================================
 
-    async manageSavingsGoal(params, userId) {
-        try {
-            const action = params.action || 'create'; // create, update, check, delete
-
-            switch (action) {
-                case 'create':
-                    return await this.createSavingsGoal(params, userId);
-                case 'update':
-                    return await this.updateSavingsGoal(params, userId);
-                case 'check':
-                    return await this.checkSavingsGoalProgress(params, userId);
-                default:
-                    return await this.listSavingsGoals(userId);
-            }
-
-        } catch (error) {
-            throw new Error(`Savings goal management failed: ${error.message}`);
-        }
-    }
-
-    async createSavingsGoal(params, userId) {
-        const goal = {
-            id: this.generateGoalId(),
-            userId,
-            name: params.goalName,
-            targetAmount: params.targetAmount,
-            currentAmount: params.currentAmount || 0,
-            targetDate: params.targetDate,
-            category: params.category || 'general',
-            priority: params.priority || 'medium',
-            createdAt: new Date().toISOString(),
-            status: 'active'
+    async createBudgetPlan(userId, budgetData, userProfile = {}) {
+        console.log(`💰 Creating budget plan for user: ${userId}`);
+        
+        const budgetPlan = {
+            userId: userId,
+            created: new Date().toISOString(),
+            totalBudget: budgetData.totalBudget || 100,
+            timeframe: budgetData.timeframe || 'weekly',
+            preferences: {
+                diet: userProfile.diet || 'general',
+                fitnessLevel: userProfile.fitnessLevel || 'beginner',
+                goals: userProfile.goals || []
+            },
+            allocation: this.calculateOptimalAllocation(budgetData, userProfile),
+            recommendations: await this.generateBudgetRecommendations(budgetData, userProfile),
+            costOptimizations: this.identifyCostOptimizations(budgetData, userProfile),
+            savingOpportunities: this.findSavingOpportunities(budgetData, userProfile)
         };
 
-        // Calculate required monthly savings
-        const monthsToTarget = this.calculateMonthsToTarget(goal.targetDate);
-        goal.requiredMonthlySavings = monthsToTarget > 0 
-            ? ((goal.targetAmount - goal.currentAmount) / monthsToTarget).toFixed(2)
-            : 0;
-
-        this.financialGoals.set(goal.id, goal);
-        await this.saveSavingsGoals(userId);
-
-        return {
-            content: this.formatSavingsGoalResponse(goal),
-            confidence: 0.9,
-            dataUpdated: true,
-            goalId: goal.id
-        };
+        // Store budget plan
+        this.budgetPlans.set(userId, budgetPlan);
+        await this.saveBudgetPlan(budgetPlan);
+        
+        return budgetPlan;
     }
 
-    // ========================================
-    // FINANCIAL ADVICE ENGINE
-    // ========================================
-
-    async provideFinancialAdvice(params, context) {
-        try {
-            const adviceType = params.type || 'general';
-            const userContext = await this.gatherUserFinancialContext(context.userId);
-            
-            let advice;
-            
-            switch (adviceType) {
-                case 'debt_reduction':
-                    advice = this.generateDebtReductionAdvice(params, userContext);
-                    break;
-                case 'investment':
-                    advice = this.generateInvestmentAdvice(params, userContext);
-                    break;
-                case 'emergency_fund':
-                    advice = this.generateEmergencyFundAdvice(userContext);
-                    break;
-                case 'budget_optimization':
-                    advice = this.generateBudgetOptimizationAdvice(userContext);
-                    break;
-                default:
-                    advice = this.generateGeneralFinancialAdvice(userContext);
-            }
-
-            return {
-                content: advice.content,
-                confidence: advice.confidence,
-                recommendations: advice.recommendations || [],
-                resources: advice.resources || []
-            };
-
-        } catch (error) {
-            throw new Error(`Financial advice generation failed: ${error.message}`);
+    calculateOptimalAllocation(budgetData, userProfile) {
+        const totalBudget = budgetData.totalBudget || 100;
+        const allocation = {};
+        
+        // Base allocation percentages
+        let fitnessPercent = 0.30; // 30% for fitness
+        let nutritionPercent = 0.60; // 60% for nutrition
+        let healthPercent = 0.10; // 10% for general health
+        
+        // Adjust based on user goals
+        if (userProfile.goals?.includes('muscle_building')) {
+            nutritionPercent += 0.10;
+            fitnessPercent -= 0.05;
+            healthPercent -= 0.05;
         }
+        
+        if (userProfile.goals?.includes('weight_loss')) {
+            fitnessPercent += 0.10;
+            nutritionPercent -= 0.10;
+        }
+        
+        // Adjust based on fitness level
+        if (userProfile.fitnessLevel === 'beginner') {
+            fitnessPercent -= 0.10;
+            nutritionPercent += 0.10;
+        } else if (userProfile.fitnessLevel === 'advanced') {
+            fitnessPercent += 0.10;
+            nutritionPercent -= 0.10;
+        }
+        
+        allocation.fitness = Math.round(totalBudget * fitnessPercent);
+        allocation.nutrition = Math.round(totalBudget * nutritionPercent);
+        allocation.health = Math.round(totalBudget * healthPercent);
+        
+        // Ensure total matches budget
+        const allocatedTotal = allocation.fitness + allocation.nutrition + allocation.health;
+        if (allocatedTotal !== totalBudget) {
+            allocation.nutrition += (totalBudget - allocatedTotal);
+        }
+        
+        console.log(`💡 Optimal allocation for $${totalBudget}: Fitness: $${allocation.fitness}, Nutrition: $${allocation.nutrition}, Health: $${allocation.health}`);
+        
+        return allocation;
     }
 
-    generateGeneralFinancialAdvice(userContext) {
-        const advice = [];
-        const recommendations = [];
+    async generateBudgetRecommendations(budgetData, userProfile) {
+        const recommendations = {
+            fitness: [],
+            nutrition: [],
+            health: [],
+            general: []
+        };
 
-        // Analyze current financial situation
-        if (userContext.hasActiveBudget) {
-            const budgetHealth = this.assessBudgetHealth(userContext.activeBudget);
+        const totalBudget = budgetData.totalBudget || 100;
+        const diet = userProfile.diet || 'general';
+        const fitnessLevel = userProfile.fitnessLevel || 'beginner';
+
+        // Fitness recommendations based on budget
+        if (totalBudget <= 50) {
+            recommendations.fitness = [
+                'Focus on bodyweight exercises (free)',
+                'Invest in basic equipment: resistance bands ($15)',
+                'Use free online workout videos',
+                'Consider outdoor activities (running, hiking)'
+            ];
+        } else if (totalBudget <= 150) {
+            recommendations.fitness = [
+                'Home gym basics: adjustable dumbbells ($60-80)',
+                'Pull-up bar ($25)',
+                'Yoga mat ($20)',
+                'Consider used equipment marketplace'
+            ];
+        } else {
+            recommendations.fitness = [
+                'Complete home gym setup possible',
+                'Consider gym membership if preferred',
+                'Invest in quality equipment that lasts',
+                'Personal training sessions (1-2/month)'
+            ];
+        }
+
+        // Nutrition recommendations based on diet and budget
+        if (diet === 'vegetarian') {
+            recommendations.nutrition = [
+                'Bulk protein sources: lentils, chickpeas ($2-3/lb)',
+                'Quinoa for complete protein ($4-5/lb)',
+                'Seasonal vegetables for variety',
+                'Plant-based protein powder if needed ($30-40/month)'
+            ];
             
-            if (budgetHealth.score < 70) {
-                advice.push("Your budget shows some areas for improvement.");
-                recommendations.push("Consider reviewing and adjusting your spending in overspending categories");
-            } else {
-                advice.push("Your budget management looks good overall!");
-                recommendations.push("Continue your current disciplined approach to budgeting");
+            if (totalBudget >= 80) {
+                recommendations.nutrition.push(
+                    'Premium organic options when possible',
+                    'Variety of nuts and seeds',
+                    'Specialty vegetarian protein products'
+                );
             }
         } else {
-            advice.push("Creating a budget would be a great first step toward better financial management.");
-            recommendations.push("Start with the 50/30/20 rule: 50% needs, 30% wants, 20% savings");
+            recommendations.nutrition = [
+                'Lean proteins in bulk (chicken, fish)',
+                'Complex carbs: brown rice, oats',
+                'Fresh vegetables and fruits',
+                'Basic supplements if needed'
+            ];
         }
 
-        // Emergency fund assessment
-        if (!userContext.hasEmergencyFund) {
-            advice.push("Building an emergency fund should be a priority.");
-            recommendations.push("Aim to save 3-6 months of expenses in a readily accessible account");
-        }
+        // Health recommendations
+        recommendations.health = [
+            'Basic multivitamin ($10-15/month)',
+            'Emergency health fund allocation',
+            'Preventive care budget'
+        ];
 
-        // Savings goals
-        if (userContext.savingsGoals.length === 0) {
-            advice.push("Setting specific savings goals can help motivate your financial journey.");
-            recommendations.push("Consider goals like vacation fund, home down payment, or retirement");
-        }
+        // General money-saving tips
+        recommendations.general = [
+            'Buy non-perishables in bulk',
+            'Use seasonal produce for better prices',
+            'Compare prices across stores',
+            'Consider generic brands for basics'
+        ];
 
-        return {
-            content: advice.join(' '),
-            confidence: 0.8,
-            recommendations,
-            resources: [
-                "Consider using the 50/30/20 budgeting method",
-                "Automate your savings to make it effortless",
-                "Review your budget monthly and adjust as needed"
-            ]
-        };
+        return recommendations;
     }
 
-    // ========================================
-    // COST OPTIMIZATION
-    // ========================================
-
-    async optimizeCosts(params, context) {
-        try {
-            const userId = context.userId;
-            const budget = await this.getActiveBudget(userId);
-            
-            if (!budget) {
-                return {
-                    content: "I need access to your budget data to provide cost optimization suggestions. Let's create a budget first!",
-                    confidence: 0.6,
-                    suggestion: 'create_budget'
-                };
-            }
-
-            const optimizations = this.identifyCostOptimizations(budget);
-            const potentialSavings = this.calculatePotentialSavings(optimizations);
-
-            return {
-                content: this.formatCostOptimizationResponse(optimizations, potentialSavings),
-                confidence: 0.85,
-                optimizations,
-                potentialSavings
-            };
-
-        } catch (error) {
-            throw new Error(`Cost optimization failed: ${error.message}`);
-        }
-    }
-
-    identifyCostOptimizations(budget) {
+    identifyCostOptimizations(budgetData, userProfile) {
         const optimizations = [];
-        const analysis = this.performBudgetAnalysis(budget);
+        const totalBudget = budgetData.totalBudget || 100;
+        
+        // Identify relevant optimization rules
+        const fitnessKey = `fitness_${userProfile.fitnessLevel || 'beginner'}`;
+        const nutritionKey = userProfile.diet === 'vegetarian' ? 
+            'nutrition_vegetarian_budget' : 'nutrition_general';
 
-        // Check for overspending categories
-        analysis.overBudgetCategories.forEach(category => {
+        if (this.costOptimizationRules.has(fitnessKey)) {
             optimizations.push({
-                type: 'overspending_reduction',
-                category: category.category,
-                currentSpending: category.overage + budget.categories[category.category].budgetAmount,
-                suggestedReduction: category.overage,
-                priority: 'high',
-                suggestions: this.getCategorySpecificSuggestions(category.category)
+                category: 'fitness',
+                ...this.costOptimizationRules.get(fitnessKey)
             });
-        });
+        }
 
-        // Check for underutilized budget categories
-        analysis.underBudgetCategories.forEach(category => {
-            if (parseFloat(category.percentageUsed) < 30) {
-                optimizations.push({
-                    type: 'budget_reallocation',
-                    category: category.category,
-                    underutilizedAmount: category.underAmount,
-                    priority: 'medium',
-                    suggestion: `Consider reallocating some of the ${category.category} budget to other categories or savings`
-                });
-            }
-        });
-
-        // Identify high-frequency small expenses
-        const smallExpenseCategories = this.identifySmallExpensePatterns(budget);
-        smallExpenseCategories.forEach(pattern => {
+        if (this.costOptimizationRules.has(nutritionKey)) {
             optimizations.push({
-                type: 'small_expense_optimization',
-                category: pattern.category,
-                frequency: pattern.frequency,
-                monthlyTotal: pattern.monthlyTotal,
-                priority: 'medium',
-                suggestion: pattern.suggestion
+                category: 'nutrition',
+                ...this.costOptimizationRules.get(nutritionKey)
             });
-        });
+        }
+
+        // Budget-specific optimizations
+        if (totalBudget <= 50) {
+            optimizations.push({
+                category: 'low_budget',
+                recommendations: [
+                    'Prioritize nutrition over equipment',
+                    'Use free resources (apps, videos)',
+                    'Focus on bodyweight fitness',
+                    'Buy generic brands'
+                ],
+                costSavings: '50-70% vs premium options'
+            });
+        }
 
         return optimizations;
     }
 
-    getCategorySpecificSuggestions(category) {
-        const suggestions = {
-            food: [
-                "Meal prep at home to reduce restaurant expenses",
-                "Use grocery store apps for coupons and discounts",
-                "Buy generic brands for basic items",
-                "Plan weekly meals to reduce food waste"
-            ],
-            entertainment: [
-                "Look for free local events and activities",
-                "Consider streaming service bundling to save money",
-                "Use happy hour pricing for dining out",
-                "Explore library programs for free entertainment"
-            ],
-            transportation: [
-                "Consider carpooling or public transit options",
-                "Maintain your vehicle regularly to avoid costly repairs",
-                "Shop around for better insurance rates",
-                "Combine errands to reduce fuel consumption"
-            ],
-            utilities: [
-                "Adjust thermostat settings to save energy",
-                "Switch to LED bulbs and energy-efficient appliances",
-                "Unplug electronics when not in use",
-                "Consider switching to a more competitive energy provider"
-            ],
-            shopping: [
-                "Implement a 24-hour waiting period before non-essential purchases",
-                "Compare prices across multiple retailers",
-                "Use cashback apps and browser extensions",
-                "Focus on buying quality items that last longer"
-            ]
-        };
-
-        return suggestions[category] || [
-            "Review recent transactions to identify patterns",
-            "Set spending alerts for this category",
-            "Consider if all expenses in this category are necessary"
-        ];
-    }
-
-    // ========================================
-    // BUDGET COMPARISON & BENCHMARKING
-    // ========================================
-
-    async compareBudgets(params, userId) {
-        try {
-            const comparisonType = params.type || 'personal'; // personal, demographic, optimal
-            
-            let comparison;
-            
-            switch (comparisonType) {
-                case 'personal':
-                    comparison = await this.comparePersonalBudgets(userId, params);
-                    break;
-                case 'demographic':
-                    comparison = await this.compareToDemographic(userId, params);
-                    break;
-                case 'optimal':
-                    comparison = await this.compareToOptimalBudget(userId);
-                    break;
-                default:
-                    comparison = await this.comparePersonalBudgets(userId, params);
-            }
-
-            return {
-                content: this.formatBudgetComparisonResponse(comparison),
-                confidence: 0.8,
-                comparisonData: comparison
-            };
-
-        } catch (error) {
-            throw new Error(`Budget comparison failed: ${error.message}`);
-        }
-    }
-
-    async comparePersonalBudgets(userId, params) {
-        const currentBudget = await this.getActiveBudget(userId);
-        const previousBudgets = await this.getPreviousBudgets(userId, 3);
+    findSavingOpportunities(budgetData, userProfile) {
+        const opportunities = [];
         
-        if (!currentBudget || previousBudgets.length === 0) {
-            return {
-                type: 'insufficient_data',
-                message: "Need more budget history for comparison"
-            };
-        }
-
-        const comparison = {
-            type: 'personal_historical',
-            current: this.performBudgetAnalysis(currentBudget),
-            previous: previousBudgets.map(budget => this.performBudgetAnalysis(budget)),
-            trends: this.calculateBudgetTrends(currentBudget, previousBudgets),
-            improvements: [],
-            concerns: []
-        };
-
-        // Identify improvements and concerns
-        comparison.trends.forEach(trend => {
-            if (trend.direction === 'improving') {
-                comparison.improvements.push(trend);
-            } else if (trend.direction === 'concerning') {
-                comparison.concerns.push(trend);
-            }
+        // Common saving opportunities
+        opportunities.push({
+            area: 'Meal Prep',
+            potential_savings: '$20-40/week',
+            description: 'Preparing meals at home vs eating out',
+            effort_level: 'medium'
         });
 
-        return comparison;
-    }
+        opportunities.push({
+            area: 'Generic Supplements',
+            potential_savings: '$10-20/month',
+            description: 'Generic vs brand name vitamins and protein',
+            effort_level: 'low'
+        });
 
-    calculateBudgetTrends(currentBudget, previousBudgets) {
-        const trends = [];
-        const currentAnalysis = this.performBudgetAnalysis(currentBudget);
-        
-        if (previousBudgets.length > 0) {
-            const previousAnalysis = this.performBudgetAnalysis(previousBudgets[0]);
-            
-            // Total spending trend
-            const spendingChange = currentAnalysis.totalSpent - previousAnalysis.totalSpent;
-            trends.push({
-                category: 'total_spending',
-                change: spendingChange,
-                percentage: previousAnalysis.totalSpent > 0 
-                    ? ((spendingChange / previousAnalysis.totalSpent) * 100).toFixed(1)
-                    : 0,
-                direction: spendingChange > 0 ? 'increasing' : 'decreasing'
-            });
-            
-            // Category-wise trends
-            Object.keys(currentAnalysis.categoryAnalysis).forEach(category => {
-                const currentCategorySpent = currentAnalysis.categoryAnalysis[category]?.spent || 0;
-                const previousCategorySpent = previousAnalysis.categoryAnalysis[category]?.spent || 0;
-                
-                if (previousCategorySpent > 0) {
-                    const categoryChange = currentCategorySpent - previousCategorySpent;
-                    const categoryPercentageChange = (categoryChange / previousCategorySpent * 100).toFixed(1);
-                    
-                    trends.push({
-                        category,
-                        change: categoryChange,
-                        percentage: categoryPercentageChange,
-                        direction: categoryChange > 0 ? 'increasing' : 'decreasing'
-                    });
-                }
+        opportunities.push({
+            area: 'Bulk Purchasing',
+            potential_savings: '$15-25/month',
+            description: 'Buying non-perishables in larger quantities',
+            effort_level: 'low'
+        });
+
+        if (userProfile.diet === 'vegetarian') {
+            opportunities.push({
+                area: 'Plant-Based Proteins',
+                potential_savings: '$30-50/month',
+                description: 'Dried beans/lentils vs processed vegetarian products',
+                effort_level: 'medium'
             });
         }
+
+        return opportunities;
+    }
+
+    // ========================================
+    // EXPENSE TRACKING AND ANALYSIS
+    // ========================================
+
+    async logExpense(userId, expenseData) {
+        const expense = {
+            id: `exp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            userId: userId,
+            amount: expenseData.amount,
+            category: expenseData.category || 'general',
+            subcategory: expenseData.subcategory || 'miscellaneous',
+            description: expenseData.description || '',
+            date: expenseData.date || new Date().toISOString(),
+            tags: expenseData.tags || [],
+            receipt_url: expenseData.receiptUrl || null,
+            recurring: expenseData.recurring || false,
+            optimization_opportunity: await this.identifyOptimizationOpportunity(expenseData)
+        };
+
+        // Store expense
+        if (!this.expenseHistory.has(userId)) {
+            this.expenseHistory.set(userId, []);
+        }
+        this.expenseHistory.get(userId).push(expense);
+
+        // Update financial insights
+        await this.updateFinancialInsights(userId, expense);
+
+        // Save to disk
+        await this.saveExpense(expense);
+
+        console.log(`💰 Logged expense: $${expense.amount} for ${expense.category} (${userId})`);
+
+        return {
+            success: true,
+            expenseId: expense.id,
+            optimization_suggestion: expense.optimization_opportunity,
+            budget_impact: await this.calculateBudgetImpact(userId, expense)
+        };
+    }
+
+    async identifyOptimizationOpportunity(expenseData) {
+        const opportunities = [];
         
+        // High-cost item optimization
+        if (expenseData.amount > 50) {
+            opportunities.push({
+                type: 'high_cost_review',
+                suggestion: 'Consider if this high-cost item aligns with your priorities',
+                potential_action: 'Research alternatives or wait for sales'
+            });
+        }
+
+        // Category-specific optimizations
+        if (expenseData.category === 'nutrition' && expenseData.amount > 30) {
+            opportunities.push({
+                type: 'nutrition_optimization',
+                suggestion: 'Consider bulk purchasing or meal prep alternatives',
+                potential_saving: '20-40%'
+            });
+        }
+
+        if (expenseData.category === 'fitness' && expenseData.subcategory === 'gym_membership') {
+            opportunities.push({
+                type: 'fitness_alternative',
+                suggestion: 'Evaluate if home workouts could provide similar value',
+                potential_saving: '60-80%'
+            });
+        }
+
+        return opportunities;
+    }
+
+    async calculateBudgetImpact(userId, expense) {
+        const budgetPlan = this.budgetPlans.get(userId);
+        if (!budgetPlan) return null;
+
+        const categoryBudget = budgetPlan.allocation[expense.category] || 0;
+        const categorySpent = this.calculateCategorySpent(userId, expense.category);
+        
+        const remaining = categoryBudget - categorySpent;
+        const percentUsed = Math.round((categorySpent / categoryBudget) * 100);
+
+        return {
+            category: expense.category,
+            budget_allocated: categoryBudget,
+            amount_spent: categorySpent,
+            remaining: remaining,
+            percent_used: percentUsed,
+            status: remaining > 0 ? 'within_budget' : 'over_budget',
+            warning: percentUsed > 80 ? 'approaching_limit' : null
+        };
+    }
+
+    calculateCategorySpent(userId, category) {
+        const expenses = this.expenseHistory.get(userId) || [];
+        const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+        
+        return expenses
+            .filter(exp => exp.category === category)
+            .filter(exp => exp.date.substring(0, 7) === currentMonth)
+            .reduce((total, exp) => total + exp.amount, 0);
+    }
+
+    // ========================================
+    // FINANCIAL INSIGHTS AND ANALYTICS
+    // ========================================
+
+    async generateFinancialReport(userId, timeframe = 'monthly') {
+        console.log(`📊 Generating financial report for ${userId} (${timeframe})`);
+        
+        const expenses = this.expenseHistory.get(userId) || [];
+        const budgetPlan = this.budgetPlans.get(userId);
+        
+        // Filter expenses by timeframe
+        const filteredExpenses = this.filterExpensesByTimeframe(expenses, timeframe);
+        
+        const report = {
+            userId: userId,
+            timeframe: timeframe,
+            generated_at: new Date().toISOString(),
+            summary: this.calculateExpenseSummary(filteredExpenses),
+            category_breakdown: this.analyzeCategorySpending(filteredExpenses),
+            budget_performance: budgetPlan ? this.analyzeBudgetPerformance(budgetPlan, filteredExpenses) : null,
+            spending_trends: this.analyzeSpendingTrends(expenses, timeframe),
+            optimization_recommendations: await this.generateOptimizationRecommendations(userId, filteredExpenses),
+            cost_saving_opportunities: this.identifyNewSavingOpportunities(filteredExpenses),
+            financial_health_score: this.calculateFinancialHealthScore(userId, filteredExpenses)
+        };
+
+        // Store insights
+        this.financialInsights.set(`${userId}_${timeframe}`, report);
+
+        return report;
+    }
+
+    filterExpensesByTimeframe(expenses, timeframe) {
+        const now = new Date();
+        let startDate;
+
+        switch (timeframe) {
+            case 'weekly':
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'monthly':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+            case 'quarterly':
+                startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+                break;
+            default:
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
+        return expenses.filter(exp => new Date(exp.date) >= startDate);
+    }
+
+    calculateExpenseSummary(expenses) {
+        const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        const average = expenses.length > 0 ? total / expenses.length : 0;
+        const highest = expenses.length > 0 ? Math.max(...expenses.map(e => e.amount)) : 0;
+        const lowest = expenses.length > 0 ? Math.min(...expenses.map(e => e.amount)) : 0;
+
+        return {
+            total_spent: Math.round(total * 100) / 100,
+            transaction_count: expenses.length,
+            average_transaction: Math.round(average * 100) / 100,
+            highest_expense: highest,
+            lowest_expense: lowest,
+            daily_average: expenses.length > 0 ? Math.round((total / 30) * 100) / 100 : 0
+        };
+    }
+
+    analyzeCategorySpending(expenses) {
+        const categories = {};
+        
+        expenses.forEach(expense => {
+            const category = expense.category;
+            if (!categories[category]) {
+                categories[category] = {
+                    total: 0,
+                    count: 0,
+                    average: 0,
+                    percentage: 0,
+                    subcategories: {}
+                };
+            }
+            
+            categories[category].total += expense.amount;
+            categories[category].count += 1;
+            
+            // Subcategory breakdown
+            const subcategory = expense.subcategory;
+            if (!categories[category].subcategories[subcategory]) {
+                categories[category].subcategories[subcategory] = {
+                    total: 0,
+                    count: 0
+                };
+            }
+            categories[category].subcategories[subcategory].total += expense.amount;
+            categories[category].subcategories[subcategory].count += 1;
+        });
+
+        // Calculate averages and percentages
+        const totalSpent = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+        
+        Object.keys(categories).forEach(category => {
+            const cat = categories[category];
+            cat.average = Math.round((cat.total / cat.count) * 100) / 100;
+            cat.percentage = Math.round((cat.total / totalSpent) * 100);
+        });
+
+        return categories;
+    }
+
+    analyzeBudgetPerformance(budgetPlan, expenses) {
+        const performance = {};
+        
+        Object.keys(budgetPlan.allocation).forEach(category => {
+            const budgeted = budgetPlan.allocation[category];
+            const spent = expenses
+                .filter(exp => exp.category === category)
+                .reduce((sum, exp) => sum + exp.amount, 0);
+            
+            performance[category] = {
+                budgeted: budgeted,
+                spent: Math.round(spent * 100) / 100,
+                remaining: Math.round((budgeted - spent) * 100) / 100,
+                percentage_used: Math.round((spent / budgeted) * 100),
+                status: spent <= budgeted ? 'on_track' : 'over_budget',
+                variance: Math.round((spent - budgeted) * 100) / 100
+            };
+        });
+
+        return performance;
+    }
+
+    analyzeSpendingTrends(expenses, timeframe) {
+        // Simple trend analysis - could be enhanced with more sophisticated algorithms
+        const trends = {
+            direction: 'stable',
+            velocity: 0,
+            peak_periods: [],
+            insights: []
+        };
+
+        if (expenses.length < 10) {
+            trends.insights.push('Need more transaction history for reliable trend analysis');
+            return trends;
+        }
+
+        // Calculate weekly/monthly averages for trend
+        const periods = this.groupExpensesByPeriod(expenses, 'weekly');
+        const averages = Object.values(periods).map(period => 
+            period.reduce((sum, exp) => sum + exp.amount, 0)
+        );
+
+        if (averages.length >= 2) {
+            const recent = averages.slice(-2).reduce((sum, val) => sum + val, 0) / 2;
+            const older = averages.slice(0, -2).reduce((sum, val) => sum + val, 0) / Math.max(averages.length - 2, 1);
+            
+            const change = ((recent - older) / older) * 100;
+            
+            if (change > 10) {
+                trends.direction = 'increasing';
+                trends.velocity = Math.round(change);
+                trends.insights.push(`Spending has increased by ${Math.round(change)}% recently`);
+            } else if (change < -10) {
+                trends.direction = 'decreasing';
+                trends.velocity = Math.round(Math.abs(change));
+                trends.insights.push(`Spending has decreased by ${Math.round(Math.abs(change))}% recently`);
+            }
+        }
+
         return trends;
     }
 
-    // ========================================
-    // UTILITY METHODS
-    // ========================================
-
-    analyzeBudgetIntent(request) {
-        const lowerRequest = request.toLowerCase();
-        const keywords = lowerRequest.split(' ');
+    groupExpensesByPeriod(expenses, period) {
+        const groups = {};
         
-        const intentKeywords = {
-            create_budget: ['create', 'make', 'new', 'budget', 'plan', 'setup'],
-            track_expense: ['spend', 'spent', 'expense', 'cost', 'track', 'record', 'add'],
-            budget_analysis: ['analyze', 'analysis', 'review', 'check', 'status', 'how', 'doing'],
-            savings_goal: ['save', 'saving', 'goal', 'target', 'fund'],
-            financial_advice: ['advice', 'help', 'suggest', 'recommend', 'should', 'what'],
-            cost_optimization: ['optimize', 'reduce', 'cut', 'save', 'lower', 'cheaper']
-        };
-        
-        const scores = {};
-        
-        Object.entries(intentKeywords).forEach(([intent, intentKeywords]) => {
-            scores[intent] = intentKeywords.reduce((score, keyword) => {
-                return score + (keywords.includes(keyword) ? 1 : 0);
-            }, 0);
+        expenses.forEach(expense => {
+            const date = new Date(expense.date);
+            let key;
+            
+            if (period === 'weekly') {
+                const weekStart = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+                key = weekStart.toISOString().substring(0, 10);
+            } else {
+                key = expense.date.substring(0, 7); // YYYY-MM
+            }
+            
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(expense);
         });
         
-        const topIntent = Object.entries(scores).reduce((max, [intent, score]) => 
-            score > max.score ? { intent, score } : max, { intent: 'general', score: 0 }
+        return groups;
+    }
+
+    async generateOptimizationRecommendations(userId, expenses) {
+        const recommendations = [];
+        
+        // High-spend category analysis
+        const categoryTotals = {};
+        expenses.forEach(exp => {
+            categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + exp.amount;
+        });
+
+        const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
+            categoryTotals[a] > categoryTotals[b] ? a : b, 'none'
+        );
+
+        if (topCategory && categoryTotals[topCategory] > 100) {
+            recommendations.push({
+                type: 'high_category_spending',
+                category: topCategory,
+                amount: categoryTotals[topCategory],
+                suggestion: `Consider reviewing ${topCategory} spending - it's your highest category`,
+                potential_saving: '15-25%'
+            });
+        }
+
+        // Frequent small purchases
+        const smallFrequentPurchases = expenses.filter(exp => exp.amount < 10).length;
+        if (smallFrequentPurchases > expenses.length * 0.3) {
+            recommendations.push({
+                type: 'small_frequent_purchases',
+                count: smallFrequentPurchases,
+                suggestion: 'Many small purchases detected - consider consolidating shopping trips',
+                potential_saving: '10-15%'
+            });
+        }
+
+        return recommendations;
+    }
+
+    identifyNewSavingOpportunities(expenses) {
+        const opportunities = [];
+        
+        // Generic brand opportunity
+        const brandedExpenses = expenses.filter(exp => 
+            exp.description && (exp.description.toLowerCase().includes('premium') || 
+                               exp.description.toLowerCase().includes('brand'))
         );
         
-        return {
-            primaryIntent: topIntent.intent,
-            confidence: Math.min(topIntent.score / 3, 1), // Normalize confidence
-            keywords: keywords.filter(word => word.length > 2),
-            detectedNumbers: this.extractNumbers(request),
-            detectedDates: this.extractDates(request)
-        };
-    }
-
-    determineBudgetAction(analysis, context) {
-        const { primaryIntent, detectedNumbers, detectedDates } = analysis;
-        
-        const params = {
-            amount: detectedNumbers.length > 0 ? detectedNumbers[0] : null,
-            date: detectedDates.length > 0 ? detectedDates[0] : null
-        };
-        
-        // Extract additional parameters based on intent
-        if (primaryIntent === 'create_budget') {
-            params.totalBudget = params.amount;
-            params.period = this.detectTimePeriod(context.request) || 'monthly';
-        } else if (primaryIntent === 'track_expense') {
-            params.category = this.detectExpenseCategory(context.request);
-            params.description = this.extractExpenseDescription(context.request);
-        } else if (primaryIntent === 'savings_goal') {
-            params.targetAmount = params.amount;
-            params.goalName = this.extractGoalName(context.request);
+        if (brandedExpenses.length > 0) {
+            opportunities.push({
+                area: 'Generic Alternatives',
+                potential_savings: '$10-30/month',
+                description: 'Switch to generic brands for basic items',
+                affected_purchases: brandedExpenses.length
+            });
         }
+
+        return opportunities;
+    }
+
+    calculateFinancialHealthScore(userId, expenses) {
+        let score = 100;
+        const budgetPlan = this.budgetPlans.get(userId);
         
+        if (!budgetPlan) {
+            return {
+                score: 50,
+                grade: 'C',
+                factors: ['No budget plan established']
+            };
+        }
+
+        const factors = [];
+        
+        // Budget adherence
+        let overBudgetCategories = 0;
+        Object.keys(budgetPlan.allocation).forEach(category => {
+            const spent = expenses
+                .filter(exp => exp.category === category)
+                .reduce((sum, exp) => sum + exp.amount, 0);
+            
+            if (spent > budgetPlan.allocation[category]) {
+                overBudgetCategories++;
+                score -= 15;
+            }
+        });
+
+        if (overBudgetCategories > 0) {
+            factors.push(`${overBudgetCategories} categories over budget`);
+        }
+
+        // Spending consistency
+        const dailySpending = this.calculateDailySpendingVariance(expenses);
+        if (dailySpending.variance > 50) {
+            score -= 10;
+            factors.push('High spending variance');
+        }
+
+        // Saving opportunities utilized
+        const savingOpps = this.findSavingOpportunities({}, {});
+        if (savingOpps.length > 3) {
+            score -= 10;
+            factors.push('Multiple unused saving opportunities');
+        }
+
+        let grade = 'A';
+        if (score < 90) grade = 'B';
+        if (score < 80) grade = 'C';
+        if (score < 70) grade = 'D';
+        if (score < 60) grade = 'F';
+
         return {
-            type: primaryIntent,
-            params,
-            confidence: analysis.confidence
+            score: Math.max(score, 0),
+            grade: grade,
+            factors: factors.length > 0 ? factors : ['Good financial discipline']
+        };
+    }
+
+    calculateDailySpendingVariance(expenses) {
+        const dailyTotals = {};
+        expenses.forEach(exp => {
+            const day = exp.date.substring(0, 10);
+            dailyTotals[day] = (dailyTotals[day] || 0) + exp.amount;
+        });
+
+        const amounts = Object.values(dailyTotals);
+        const average = amounts.reduce((sum, val) => sum + val, 0) / amounts.length;
+        const variance = amounts.reduce((sum, val) => sum + Math.pow(val - average, 2), 0) / amounts.length;
+
+        return {
+            average: Math.round(average * 100) / 100,
+            variance: Math.round(Math.sqrt(variance) * 100) / 100
         };
     }
 
     // ========================================
-    // DATA MANAGEMENT
+    // INTEGRATION WITH OTHER AGENTS
     // ========================================
 
-    async saveBudgetData(budgetData) {
-        const filePath = path.join(this.budgetDataPath, `${budgetData.userId}_${budgetData.id}.json`);
-        await fs.writeFile(filePath, JSON.stringify(budgetData, null, 2));
+    async getOptimizedRecommendations(userId, requestType, parameters = {}) {
+        console.log(`💡 Getting optimized recommendations for ${requestType}`);
+        
+        const budgetPlan = this.budgetPlans.get(userId);
+        const expenses = this.expenseHistory.get(userId) || [];
+        
+        let recommendations = [];
+
+        switch (requestType) {
+            case 'nutrition_meal_plan':
+                recommendations = await this.getNutritionBudgetRecommendations(budgetPlan, parameters);
+                break;
+            case 'workout_equipment':
+                recommendations = await this.getWorkoutBudgetRecommendations(budgetPlan, parameters);
+                break;
+            case 'health_supplements':
+                recommendations = await this.getSupplementBudgetRecommendations(budgetPlan, parameters);
+                break;
+            default:
+                recommendations = await this.getGeneralBudgetRecommendations(budgetPlan, parameters);
+        }
+
+        return {
+            success: true,
+            recommendations: recommendations,
+            budget_context: budgetPlan ? {
+                total_budget: budgetPlan.totalBudget,
+                remaining_budget: this.calculateRemainingBudget(userId),
+                category_budgets: budgetPlan.allocation
+            } : null
+        };
     }
 
-    async getActiveBudget(userId) {
+    async getNutritionBudgetRecommendations(budgetPlan, parameters) {
+        const nutritionBudget = budgetPlan?.allocation?.nutrition || 60;
+        const recommendations = [];
+
+        if (nutritionBudget <= 30) {
+            recommendations.push({
+                category: 'budget_nutrition',
+                items: [
+                    { item: 'Dried beans/lentils', cost: '$3-4/week', protein: '20g per cup' },
+                    { item: 'Brown rice (bulk)', cost: '$2/week', carbs: 'Complex carbs' },
+                    { item: 'Seasonal vegetables', cost: '$8-12/week', vitamins: 'A, C, K' },
+                    { item: 'Bananas', cost: '$2-3/week', potassium: 'High' }
+                ],
+                total_estimated: '$15-21/week',
+                savings_tip: 'Buy in bulk and prep meals to maximize value'
+            });
+        } else if (nutritionBudget <= 60) {
+            recommendations.push({
+                category: 'moderate_nutrition',
+                items: [
+                    { item: 'Quinoa', cost: '$5-6/week', protein: 'Complete protein' },
+                    { item: 'Greek yogurt', cost: '$6-8/week', protein: '15-20g per serving' },
+                    { item: 'Nuts and seeds', cost: '$8-10/week', fats: 'Healthy fats' },
+                    { item: 'Protein powder', cost: '$10-12/week', protein: '25g per scoop' },
+                    { item: 'Fresh produce variety', cost: '$15-20/week', nutrients: 'Varied vitamins' }
+                ],
+                total_estimated: '$44-56/week',
+                optimization_tip: 'Mix premium items with budget staples'
+            });
+        } else {
+            recommendations.push({
+                category: 'premium_nutrition',
+                items: [
+                    { item: 'Organic produce', cost: '$20-25/week', quality: 'Organic' },
+                    { item: 'Specialty proteins', cost: '$15-18/week', variety: 'Tempeh, seitan' },
+                    { item: 'Superfoods', cost: '$10-12/week', nutrients: 'Chia, hemp seeds' },
+                    { item: 'Quality supplements', cost: '$15-20/week', targeted: 'Specific goals' }
+                ],
+                total_estimated: '$60-75/week',
+                luxury_tip: 'Focus on quality and variety within budget'
+            });
+        }
+
+        return recommendations;
+    }
+
+    async getWorkoutBudgetRecommendations(budgetPlan, parameters) {
+        const fitnessBudget = budgetPlan?.allocation?.fitness || 30;
+        const recommendations = [];
+
+        if (fitnessBudget <= 25) {
+            recommendations.push({
+                category: 'minimal_equipment',
+                items: [
+                    { item: 'Resistance bands set', cost: '$15-20', versatility: 'Full body workouts' },
+                    { item: 'Yoga mat', cost: '$15-25', use: 'Floor exercises, stretching' },
+                    { item: 'Jump rope', cost: '$10-15', cardio: 'High intensity cardio' }
+                ],
+                total_cost: '$40-60 one-time',
+                free_alternatives: ['Bodyweight exercises', 'YouTube workouts', 'Running/walking']
+            });
+        } else if (fitnessBudget <= 75) {
+            recommendations.push({
+                category: 'home_gym_basics',
+                items: [
+                    { item: 'Adjustable dumbbells', cost: '$60-80', versatility: 'Strength training' },
+                    { item: 'Pull-up bar', cost: '$25-35', muscle_groups: 'Upper body' },
+                    { item: 'Kettlebell', cost: '$30-40', workout_type: 'Functional fitness' },
+                    { item: 'Stability ball', cost: '$15-25', core: 'Core strengthening' }
+                ],
+                total_cost: '$130-180 one-time',
+                monthly_alternative: 'Basic gym membership ($25-40/month)'
+            });
+        }
+
+        return recommendations;
+    }
+
+    calculateRemainingBudget(userId) {
+        const budgetPlan = this.budgetPlans.get(userId);
+        if (!budgetPlan) return 0;
+
+        const totalBudget = budgetPlan.totalBudget;
+        const expenses = this.expenseHistory.get(userId) || [];
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        
+        const monthlySpent = expenses
+            .filter(exp => exp.date.substring(0, 7) === currentMonth)
+            .reduce((sum, exp) => sum + exp.amount, 0);
+
+        return Math.max(totalBudget - monthlySpent, 0);
+    }
+
+    // ========================================
+    // FILE OPERATIONS
+    // ========================================
+
+    async saveBudgetPlan(budgetPlan) {
         try {
-            const files = await fs.readdir(this.budgetDataPath);
-            const userFiles = files.filter(file => file.startsWith(`${userId}_`));
-            
-            for (const file of userFiles) {
-                const filePath = path.join(this.budgetDataPath, file);
-                const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
-                
-                if (data.status === 'active') {
-                    return data;
-                }
-            }
-            
-            return null;
+            const filePath = `data/budgets/${budgetPlan.userId}_plan.json`;
+            await fs.writeFile(filePath, JSON.stringify(budgetPlan, null, 2));
+            console.log(`💾 Saved budget plan for ${budgetPlan.userId}`);
         } catch (error) {
-            console.error('Error getting active budget:', error);
-            return null;
+            console.error('❌ Error saving budget plan:', error);
         }
     }
 
-    async loadExistingBudgets() {
+    async saveExpense(expense) {
         try {
-            const files = await fs.readdir(this.budgetDataPath);
-            console.log(`Loaded ${files.length} existing budget files`);
+            const date = expense.date.substring(0, 7); // YYYY-MM
+            const filePath = `data/expenses/${expense.userId}_${date}.json`;
+            
+            // Load existing expenses for the month
+            let monthlyExpenses = { userId: expense.userId, month: date, expenses: [] };
+            try {
+                const existing = await fs.readFile(filePath, 'utf8');
+                monthlyExpenses = JSON.parse(existing);
+            } catch (error) {
+                // File doesn't exist, that's fine
+            }
+            
+            monthlyExpenses.expenses.push(expense);
+            await fs.writeFile(filePath, JSON.stringify(monthlyExpenses, null, 2));
+            
         } catch (error) {
-            console.error('Error loading existing budgets:', error);
+            console.error('❌ Error saving expense:', error);
+        }
+    }
+
+    async updateFinancialInsights(userId, expense) {
+        // Update running financial insights
+        if (!this.financialInsights.has(userId)) {
+            this.financialInsights.set(userId, {
+                total_spent: 0,
+                category_totals: {},
+                recent_trends: []
+            });
+        }
+
+        const insights = this.financialInsights.get(userId);
+        insights.total_spent += expense.amount;
+        insights.category_totals[expense.category] = (insights.category_totals[expense.category] || 0) + expense.amount;
+        insights.recent_trends.push({
+            date: expense.date,
+            amount: expense.amount,
+            category: expense.category
+        });
+
+        // Keep only recent trends (last 30 entries)
+        if (insights.recent_trends.length > 30) {
+            insights.recent_trends = insights.recent_trends.slice(-30);
         }
     }
 
     // ========================================
-    // RESPONSE FORMATTERS
+    // STATUS AND UTILITY METHODS
     // ========================================
 
-    formatBudgetCreationResponse(budgetData, analysis) {
-        const totalBudget = budgetData.totalBudget;
-        const categoryCount = Object.keys(budgetData.categories).length;
-        
-        let response = `Great! I've created your ${budgetData.period} budget of ${totalBudget.toFixed(2)} with ${categoryCount} categories.\n\n`;
-        
-        response += "**Budget Breakdown:**\n";
-        Object.entries(budgetData.categories).forEach(([category, data]) => {
-            response += `• ${category.charAt(0).toUpperCase() + category.slice(1)}: ${data.budgetAmount.toFixed(2)} (${data.percentage}%)\n`;
-        });
-        
-        response += `\nYour budget is now active and ready for expense tracking. I'll alert you when you reach ${budgetData.settings.alertThreshold}% of any category limit.`;
-        
-        return response;
+    getStatus() {
+        return {
+            agent: this.agentName,
+            code: this.agentCode,
+            version: this.version,
+            initialized: this.initialized,
+            active_budgets: this.budgetPlans.size,
+            tracked_users: this.expenseHistory.size,
+            total_expenses: Array.from(this.expenseHistory.values()).reduce((sum, expenses) => sum + expenses.length, 0),
+            capabilities: this.getCapabilities(),
+            integrations: {
+                nutrition_agent: this.nutritionIntegration,
+                workout_agent: this.workoutIntegration
+            }
+        };
     }
 
-    formatExpenseTrackingResponse(expense, budget, alerts) {
-        let response = `Expense recorded: ${expense.amount} for ${expense.category}`;
+    getCapabilities() {
+        return [
+            'Budget Planning & Optimization',
+            'Expense Tracking & Analysis',
+            'Cost Optimization Recommendations',
+            'Financial Health Scoring',
+            'Savings Opportunity Identification',
+            'Cross-Agent Integration',
+            'Real-time Budget Monitoring',
+            'Spending Trend Analysis',
+            'Category-based Budget Allocation',
+            'Financial Reporting & Insights'
+        ];
+    }
+
+    async generateBudgetResponse(message, userPreferences = {}, memoryInsights = {}) {
+        let response = "💰 Budget Management Agent: ";
         
-        if (expense.description !== 'Expense') {
-            response += ` (${expense.description})`;
-        }
+        // Analyze the message for budget-related intent
+        const lowerMessage = message.toLowerCase();
         
-        // Add category status
-        const category = budget.categories[expense.category];
-        if (category) {
-            const percentageUsed = (category.spentAmount / category.budgetAmount * 100).toFixed(1);
-            const remaining = category.budgetAmount - category.spentAmount;
+        if (lowerMessage.includes('budget plan') || lowerMessage.includes('create budget')) {
+            response += "I'll help you create an optimized budget plan! ";
             
-            response += `\n\n**${expense.category.charAt(0).toUpperCase() + expense.category.slice(1)} Category Status:**\n`;
-            response += `• Spent: ${category.spentAmount.toFixed(2)} of ${category.budgetAmount.toFixed(2)} (${percentageUsed}%)\n`;
-            response += `• Remaining: ${remaining.toFixed(2)}`;
-        }
-        
-        // Add alerts if any
-        if (alerts.length > 0) {
-            response += "\n\n**⚠️ Budget Alerts:**\n";
-            alerts.forEach(alert => {
-                response += `• ${alert.message}\n`;
-            });
-        }
-        
-        return response;
-    }
-
-    formatBudgetAnalysisResponse(analysis, recommendations, insights) {
-        let response = `**Budget Analysis Summary**\n\n`;
-        
-        response += `**Overall Status:**\n`;
-        response += `• Total Budget: ${analysis.totalBudget.toFixed(2)}\n`;
-        response += `• Total Spent: ${analysis.totalSpent.toFixed(2)} (${analysis.percentageUsed}%)\n`;
-        response += `• Remaining: ${analysis.remainingBudget.toFixed(2)}\n\n`;
-        
-        if (analysis.overBudgetCategories.length > 0) {
-            response += `**⚠️ Over Budget Categories:**\n`;
-            analysis.overBudgetCategories.forEach(category => {
-                response += `• ${category.category}: Over by ${category.overage.toFixed(2)} (${category.percentageOver}%)\n`;
-            });
-            response += "\n";
-        }
-        
-        if (analysis.underBudgetCategories.length > 0) {
-            response += `**✅ Under Budget Categories:**\n`;
-            analysis.underBudgetCategories.forEach(category => {
-                response += `• ${category.category}: ${category.underAmount.toFixed(2)} remaining (${category.percentageUsed}% used)\n`;
-            });
-            response += "\n";
-        }
-        
-        if (recommendations.length > 0) {
-            response += `**💡 Recommendations:**\n`;
-            recommendations.forEach(rec => {
-                response += `• ${rec}\n`;
-            });
-        }
-        
-        return response;
-    }
-
-    formatSavingsGoalResponse(goal) {
-        const progress = goal.currentAmount > 0 
-            ? (goal.currentAmount / goal.targetAmount * 100).toFixed(1)
-            : 0;
-        
-        let response = `**Savings Goal Created: ${goal.name}**\n\n`;
-        response += `• Target Amount: ${goal.targetAmount.toFixed(2)}\n`;
-        response += `• Current Progress: ${goal.currentAmount.toFixed(2)} (${progress}%)\n`;
-        response += `• Target Date: ${new Date(goal.targetDate).toLocaleDateString()}\n`;
-        
-        if (goal.requiredMonthlySavings > 0) {
-            response += `• Required Monthly Savings: ${goal.requiredMonthlySavings}\n`;
-        }
-        
-        response += `\nI'll help you track your progress toward this goal!`;
-        
-        return response;
-    }
-
-    formatCostOptimizationResponse(optimizations, potentialSavings) {
-        let response = `**Cost Optimization Analysis**\n\n`;
-        
-        if (potentialSavings.total > 0) {
-            response += `**💰 Potential Monthly Savings: ${potentialSavings.total.toFixed(2)}**\n\n`;
-        }
-        
-        response += `**Optimization Opportunities:**\n`;
-        
-        optimizations.forEach((opt, index) => {
-            response += `\n${index + 1}. **${opt.type.replace(/_/g, ' ').toUpperCase()}**\n`;
-            
-            if (opt.category) {
-                response += `   Category: ${opt.category.charAt(0).toUpperCase() + opt.category.slice(1)}\n`;
+            if (userPreferences.budget) {
+                response += `With your $${userPreferences.budget} budget, I can allocate funds optimally across fitness, nutrition, and health. `;
             }
             
-            if (opt.suggestedReduction) {
-                response += `   Potential Savings: ${opt.suggestedReduction.toFixed(2)}/month\n`;
+            if (userPreferences.diet === 'vegetarian') {
+                response += "For vegetarian nutrition, I recommend allocating 60-70% to food with focus on cost-effective protein sources. ";
+            }
+        } else if (lowerMessage.includes('save money') || lowerMessage.includes('reduce costs')) {
+            response += "Excellent! I can identify multiple cost-saving opportunities. ";
+            
+            if (userPreferences.diet === 'vegetarian') {
+                response += "Vegetarian diets can save 40-50% compared to meat-based diets when optimized properly. ";
             }
             
-            if (opt.suggestions) {
-                response += `   Suggestions:\n`;
-                opt.suggestions.slice(0, 3).forEach(suggestion => {
-                    response += `   • ${suggestion}\n`;
-                });
-            } else if (opt.suggestion) {
-                response += `   • ${opt.suggestion}\n`;
+            response += "Key areas for savings: bulk purchasing, generic brands, and meal prep. ";
+        } else if (lowerMessage.includes('expense') || lowerMessage.includes('track spending')) {
+            response += "I can help you track and analyze your health-related spending. ";
+            response += "This includes categorizing expenses and identifying optimization opportunities. ";
+        } else {
+            response += "I can help you optimize your health and fitness budget. ";
+            
+            if (memoryInsights.userPreferences?.budget) {
+                response += `Working with your $${memoryInsights.userPreferences.budget} budget, `;
             }
-        });
-        
-        return response;
-    }
-
-    // ========================================
-    // HELPER METHODS
-    // ========================================
-
-    generateBudgetId() {
-        return `budget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    generateExpenseId() {
-        return `expense_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    generateGoalId() {
-        return `goal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    }
-
-    extractNumbers(text) {
-        const numberRegex = /\d+\.?\d*/g;
-        const matches = text.match(numberRegex);
-        return matches ? matches.map(Number) : [];
-    }
-
-    extractDates(text) {
-        // Simple date extraction - can be enhanced
-        const dateRegex = /\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2}/g;
-        return text.match(dateRegex) || [];
-    }
-
-    detectExpenseCategory(text) {
-        const categoryKeywords = {
-            food: ['food', 'restaurant', 'grocery', 'lunch', 'dinner', 'coffee', 'meal'],
-            transportation: ['gas', 'fuel', 'uber', 'taxi', 'bus', 'train', 'parking'],
-            entertainment: ['movie', 'game', 'concert', 'entertainment', 'fun', 'hobby'],
-            utilities: ['electric', 'water', 'gas', 'internet', 'phone', 'utility'],
-            healthcare: ['doctor', 'medical', 'pharmacy', 'health', 'medicine'],
-            shopping: ['clothes', 'clothing', 'shopping', 'amazon', 'store']
-        };
-        
-        const lowerText = text.toLowerCase();
-        
-        for (const [category, keywords] of Object.entries(categoryKeywords)) {
-            if (keywords.some(keyword => lowerText.includes(keyword))) {
-                return category;
-            }
+            
+            response += "I provide budget planning, expense tracking, and cost optimization recommendations. ";
         }
         
-        return 'other';
-    }
-
-    checkBudgetAlerts(budget) {
-        const alerts = [];
-        const threshold = budget.settings.alertThreshold / 100;
+        response += "What specific budget goals would you like to work on?";
         
-        Object.entries(budget.categories).forEach(([categoryName, categoryData]) => {
-            if (categoryData.budgetAmount > 0) {
-                const percentageUsed = categoryData.spentAmount / categoryData.budgetAmount;
-                
-                if (percentageUsed >= 1) {
-                    alerts.push({
-                        type: 'over_budget',
-                        category: categoryName,
-                        message: `${categoryName} is over budget by ${(categoryData.spentAmount - categoryData.budgetAmount).toFixed(2)}`
-                    });
-                } else if (percentageUsed >= threshold) {
-                    alerts.push({
-                        type: 'approaching_limit',
-                        category: categoryName,
-                        message: `${categoryName} is at ${(percentageUsed * 100).toFixed(0)}% of budget limit`
-                    });
-                }
-            }
-        });
-        
-        return alerts;
-    }
-
-    calculatePotentialSavings(optimizations) {
-        let totalSavings = 0;
-        
-        optimizations.forEach(opt => {
-            if (opt.suggestedReduction) {
-                totalSavings += opt.suggestedReduction;
-            } else if (opt.monthlyTotal) {
-                totalSavings += opt.monthlyTotal * 0.2; // Assume 20% reduction potential
-            }
-        });
-        
-        return {
-            total: totalSavings,
-            breakdown: optimizations.map(opt => ({
-                type: opt.type,
-                category: opt.category,
-                savings: opt.suggestedReduction || (opt.monthlyTotal * 0.2) || 0
-            }))
-        };
-    }
-
-    initializeExpenseCategories() {
-        return {
-            housing: { color: '#FF6B6B', icon: '🏠' },
-            food: { color: '#4ECDC4', icon: '🍽️' },
-            transportation: { color: '#45B7D1', icon: '🚗' },
-            utilities: { color: '#FFA07A', icon: '💡' },
-            entertainment: { color: '#98D8C8', icon: '🎬' },
-            healthcare: { color: '#FF7171', icon: '🏥' },
-            shopping: { color: '#AED6F1', icon: '🛍️' },
-            savings: { color: '#90EE90', icon: '💰' },
-            other: { color: '#DDA0DD', icon: '📦' }
-        };
-    }
-
-    initializeBudgetingStrategies() {
-        return {
-            '50-30-20': {
-                name: '50/30/20 Rule',
-                description: '50% needs, 30% wants, 20% savings',
-                allocation: { needs: 50, wants: 30, savings: 20 }
-            },
-            'zero-based': {
-                name: 'Zero-Based Budgeting',
-                description: 'Every dollar has a purpose',
-                allocation: 'custom'
-            },
-            'envelope': {
-                name: 'Envelope Method',
-                description: 'Physical or digital envelopes for each category',
-                allocation: 'custom'
-            }
-        };
-    }
-
-    async provideGeneralBudgetGuidance(request, context) {
-        return {
-            content: `I'm your Budget Management Agent! I can help you with:
-
-• **Create Budgets** - Set up monthly, weekly, or yearly budgets
-• **Track Expenses** - Record and categorize your spending
-• **Analyze Spending** - Get insights into your financial habits
-• **Set Savings Goals** - Plan for future purchases or emergencies
-• **Optimize Costs** - Find ways to reduce expenses
-• **Financial Advice** - Get personalized money management tips
-
-What would you like to work on today? You can say things like:
-- "Create a $3000 monthly budget"
-- "Track a $50 dinner expense"
-- "Analyze my current budget"
-- "Set a $5000 savings goal for vacation"`,
-            confidence: 0.9
-        };
+        return response;
     }
 }
 
-module.exports = BudgetManagementAgent;
+module.exports = EnhancedBudgetManagementAgent;

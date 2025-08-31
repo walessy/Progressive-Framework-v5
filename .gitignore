@@ -1,41 +1,60 @@
 ﻿# Dependencies
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented libs
+lib-cov
+
+# Coverage directory
+coverage/
+.nyc_output
+
+# Runtime logs
+logs
+*.log
 
 # Environment variables
 .env
 .env.local
-.env.production
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Data files
-data/conversations/*
-data/sessions/*
-!data/conversations/.gitkeep
-!data/sessions/.gitkeep
+# Docker
+.dockerignore
 
-# Logs
-logs/
-*.log
-
-# Runtime data
-pids/
-*.pid
-*.seed
-
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS files
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Temporary folders
+tmp/
+temp/
 
 # Build outputs
 dist/
 build/
 
-# Real Integrations Security
-config/*.json
-!config/sample-*.json
+# Backup files
+*.backup
+*.old

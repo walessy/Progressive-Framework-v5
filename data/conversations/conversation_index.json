@@ -1,0 +1,50 @@
+{
+  "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140119_COLLAB_1756562479402_6ey9fi": {
+    "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T14_20250830T140119.json",
+    "type": "agent_collaborations",
+    "createdAt": "2025-08-30T14:01:19.403Z",
+    "updatedAt": "2025-08-30T14:01:19.403Z",
+    "participants": [
+      null,
+      "NPA",
+      "WPA"
+    ],
+    "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140119_COLLAB_1756562479402_6ey9fi"
+  },
+  "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140237_COLLAB_1756562557486_jt7oo9": {
+    "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T14_20250830T140237.json",
+    "type": "agent_collaborations",
+    "createdAt": "2025-08-30T14:02:37.487Z",
+    "updatedAt": "2025-08-30T14:02:37.487Z",
+    "participants": [
+      null,
+      "NPA",
+      "WPA"
+    ],
+    "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140237_COLLAB_1756562557486_jt7oo9"
+  },
+  "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140237_COLLAB_1756562557498_v5eshu": {
+    "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T14_20250830T140237.json",
+    "type": "agent_collaborations",
+    "createdAt": "2025-08-30T14:02:37.499Z",
+    "updatedAt": "2025-08-30T14:02:37.499Z",
+    "participants": [
+      null,
+      "NPA",
+      "WPA"
+    ],
+    "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140237_COLLAB_1756562557498_v5eshu"
+  },
+  "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140331_COLLAB_1756562611031_18omsb": {
+    "filePath": "C:\\Projects\\Progressive-Framework-v5\\data\\conversations\\agent_collaborations\\AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T14_20250830T140331.json",
+    "type": "agent_collaborations",
+    "createdAt": "2025-08-30T14:03:31.031Z",
+    "updatedAt": "2025-08-30T14:03:31.031Z",
+    "participants": [
+      null,
+      "NPA",
+      "WPA"
+    ],
+    "title": "AGENT__TO_NPA_TO_WPA_nutrition_fitness_20250830T140331_COLLAB_1756562611031_18omsb"
+  }
+}
