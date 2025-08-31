@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 // Enhanced ConversationStore with Semantic Intelligence Integration
 // Location: C:\Projects\Progressive-Framework-v5\src\persistence/EnhancedConversationStore.js
 

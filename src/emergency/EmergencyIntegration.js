@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 // Emergency System Integration & API
 // Location: C:\Projects\Progressive-Framework-v5\src\emergency\EmergencyIntegration.js
 
