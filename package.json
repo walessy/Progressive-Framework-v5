@@ -18,7 +18,7 @@
                     "lint:fix":  "eslint src/ --ext .js --fix",
                     "format":  "prettier --write \"src/**/*.js\" \"*.js\"",
                     "format:check":  "prettier --check \"src/**/*.js\" \"*.js\"",
-                    "test":  "jest",
+                    "test":  "jest --testPathPattern=tests/unit --coverage --passWithNoTests",
                     "test:unit":  "jest --testPathPattern=tests/unit --coverage",
                     "test:integration":  "jest --testPathPattern=tests/integration --passWithNoTests",
                     "test:emergency":  "jest --testPathPattern=tests/emergency",
