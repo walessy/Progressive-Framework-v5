@@ -232,7 +232,7 @@ class ConversationPersistence extends EventEmitter {
             keyInsights: includeKeyInsights ? this.extractKeyInsights(conversation) : [],
             userPreferences: includeUserPreferences ? this.extractPreferencesFromConversation(conversation) : {},
             actionItems: includeActionItems ? this.extractActionItems(conversation) : [],
-            sentiment: this.analyzeCon conversationSentiment(conversation),
+            sentiment: this.analyzeConversationSentiment(conversation),
             effectiveness: this.calculateConversationEffectiveness(conversation)
         };
 
