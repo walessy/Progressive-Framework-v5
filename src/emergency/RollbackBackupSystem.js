@@ -369,28 +369,28 @@ class RollbackBackupSystem {
 
     async rollbackComponent(componentName, componentBackup) {
         switch (componentName) {
-            case 'conversations':
-                await this.rollbackConversations(componentBackup);
-                break;
+        case 'conversations':
+            await this.rollbackConversations(componentBackup);
+            break;
                 
-            case 'budgets':
-                await this.rollbackBudgets(componentBackup);
-                break;
+        case 'budgets':
+            await this.rollbackBudgets(componentBackup);
+            break;
                 
-            case 'system_state':
-                await this.rollbackSystemState(componentBackup);
-                break;
+        case 'system_state':
+            await this.rollbackSystemState(componentBackup);
+            break;
                 
-            case 'agent_configs':
-                await this.rollbackAgentConfigs(componentBackup);
-                break;
+        case 'agent_configs':
+            await this.rollbackAgentConfigs(componentBackup);
+            break;
                 
-            case 'user_profiles':
-                await this.rollbackUserProfiles(componentBackup);
-                break;
+        case 'user_profiles':
+            await this.rollbackUserProfiles(componentBackup);
+            break;
                 
-            default:
-                console.warn(`Unknown component for rollback: ${componentName}`);
+        default:
+            console.warn(`Unknown component for rollback: ${componentName}`);
         }
     }
 
@@ -404,7 +404,7 @@ class RollbackBackupSystem {
             // Restore from backup
             await this.restoreDirectoryFromBackup(componentBackup.backupPath, targetPath);
             
-            console.log(`✅ Conversations rolled back successfully`);
+            console.log('✅ Conversations rolled back successfully');
             
         } catch (error) {
             console.error('Conversations rollback failed:', error);
@@ -422,7 +422,7 @@ class RollbackBackupSystem {
             // Restore from backup
             await this.restoreDirectoryFromBackup(componentBackup.backupPath, targetPath);
             
-            console.log(`✅ Budgets rolled back successfully`);
+            console.log('✅ Budgets rolled back successfully');
             
         } catch (error) {
             console.error('Budgets rollback failed:', error);
@@ -463,23 +463,23 @@ class RollbackBackupSystem {
             let data = null;
             
             switch (componentType) {
-                case 'conversations':
-                    data = await this.backupConversations();
-                    break;
-                case 'budgets':
-                    data = await this.backupBudgets();
-                    break;
-                case 'system_state':
-                    data = await this.backupSystemState();
-                    break;
-                case 'agent_configs':
-                    data = await this.backupAgentConfigs();
-                    break;
-                case 'user_profiles':
-                    data = await this.backupUserProfiles();
-                    break;
-                default:
-                    throw new Error(`Unknown component type: ${componentType}`);
+            case 'conversations':
+                data = await this.backupConversations();
+                break;
+            case 'budgets':
+                data = await this.backupBudgets();
+                break;
+            case 'system_state':
+                data = await this.backupSystemState();
+                break;
+            case 'agent_configs':
+                data = await this.backupAgentConfigs();
+                break;
+            case 'user_profiles':
+                data = await this.backupUserProfiles();
+                break;
+            default:
+                throw new Error(`Unknown component type: ${componentType}`);
             }
             
             return await this.createIncrementalBackup(componentType, data, reason);

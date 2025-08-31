@@ -45,8 +45,8 @@ class FoodDeliveryIntegration {
 
             // Set active provider (prioritize by availability)
             this.activeProvider = this.providers.ubereats ? 'ubereats' : 
-                                 this.providers.doordash ? 'doordash' :
-                                 this.providers.local_meal_prep ? 'local_meal_prep' : null;
+                this.providers.doordash ? 'doordash' :
+                    this.providers.local_meal_prep ? 'local_meal_prep' : null;
 
             if (this.activeProvider) {
                 this.initialized = true;

@@ -422,7 +422,7 @@ class CompleteMasterControlAgent extends BaseAgent {
     async updateDomainWeights(domainScores, performanceData) {
         const dominantDomain = Object.entries(domainScores)
             .reduce((max, [domain, score]) => score > max.score ? {domain, score} : max, 
-                    {domain: null, score: 0});
+                {domain: null, score: 0});
         
         if (dominantDomain.domain && this.domainKeywords[dominantDomain.domain]) {
             const adjustment = performanceData.success ? 0.01 : -0.01;
@@ -590,7 +590,7 @@ class CompleteMasterControlAgent extends BaseAgent {
     logRoutingDecision(selectedOption, allOptions, analysis, userId) {
         // Log for debugging and system monitoring
         console.log(`[MCA Routing] User: ${userId}, Selected: ${selectedOption.agent} (${selectedOption.confidence.toFixed(2)}), Domain Scores:`, 
-                   Object.entries(analysis.domains).map(([d, s]) => `${d}:${s.toFixed(1)}`).join(', '));
+            Object.entries(analysis.domains).map(([d, s]) => `${d}:${s.toFixed(1)}`).join(', '));
     }
 
     calculateMCAConfidence(analysis) {
@@ -830,7 +830,7 @@ class CompleteMasterControlAgent extends BaseAgent {
 
     createErrorResponse(error, request, userId) {
         return {
-            content: "I encountered an issue processing your request, but I'm learning from this to improve future interactions. Could you please try rephrasing your question?",
+            content: 'I encountered an issue processing your request, but I\'m learning from this to improve future interactions. Could you please try rephrasing your question?',
             success: false,
             confidence: 0.1,
             error: error.message,
@@ -882,7 +882,7 @@ What would you like help with today?`;
         }
         
         // General helpful response
-        return `I'm here to help with nutrition, fitness, budgeting, or any general questions. My specialized agents are ready to provide expert guidance in their domains. What's on your mind?`;
+        return 'I\'m here to help with nutrition, fitness, budgeting, or any general questions. My specialized agents are ready to provide expert guidance in their domains. What\'s on your mind?';
     }
 
     generateSessionInsights(context) {

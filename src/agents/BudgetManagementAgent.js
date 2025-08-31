@@ -533,17 +533,17 @@ class EnhancedBudgetManagementAgent {
         let startDate;
 
         switch (timeframe) {
-            case 'weekly':
-                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                break;
-            case 'monthly':
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                break;
-            case 'quarterly':
-                startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-                break;
-            default:
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        case 'weekly':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+        case 'monthly':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+        case 'quarterly':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            break;
+        default:
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         }
 
         return expenses.filter(exp => new Date(exp.date) >= startDate);
@@ -836,17 +836,17 @@ class EnhancedBudgetManagementAgent {
         let recommendations = [];
 
         switch (requestType) {
-            case 'nutrition_meal_plan':
-                recommendations = await this.getNutritionBudgetRecommendations(budgetPlan, parameters);
-                break;
-            case 'workout_equipment':
-                recommendations = await this.getWorkoutBudgetRecommendations(budgetPlan, parameters);
-                break;
-            case 'health_supplements':
-                recommendations = await this.getSupplementBudgetRecommendations(budgetPlan, parameters);
-                break;
-            default:
-                recommendations = await this.getGeneralBudgetRecommendations(budgetPlan, parameters);
+        case 'nutrition_meal_plan':
+            recommendations = await this.getNutritionBudgetRecommendations(budgetPlan, parameters);
+            break;
+        case 'workout_equipment':
+            recommendations = await this.getWorkoutBudgetRecommendations(budgetPlan, parameters);
+            break;
+        case 'health_supplements':
+            recommendations = await this.getSupplementBudgetRecommendations(budgetPlan, parameters);
+            break;
+        default:
+            recommendations = await this.getGeneralBudgetRecommendations(budgetPlan, parameters);
         }
 
         return {
@@ -1051,43 +1051,43 @@ class EnhancedBudgetManagementAgent {
     }
 
     async generateBudgetResponse(message, userPreferences = {}, memoryInsights = {}) {
-        let response = "💰 Budget Management Agent: ";
+        let response = '💰 Budget Management Agent: ';
         
         // Analyze the message for budget-related intent
         const lowerMessage = message.toLowerCase();
         
         if (lowerMessage.includes('budget plan') || lowerMessage.includes('create budget')) {
-            response += "I'll help you create an optimized budget plan! ";
+            response += 'I\'ll help you create an optimized budget plan! ';
             
             if (userPreferences.budget) {
                 response += `With your $${userPreferences.budget} budget, I can allocate funds optimally across fitness, nutrition, and health. `;
             }
             
             if (userPreferences.diet === 'vegetarian') {
-                response += "For vegetarian nutrition, I recommend allocating 60-70% to food with focus on cost-effective protein sources. ";
+                response += 'For vegetarian nutrition, I recommend allocating 60-70% to food with focus on cost-effective protein sources. ';
             }
         } else if (lowerMessage.includes('save money') || lowerMessage.includes('reduce costs')) {
-            response += "Excellent! I can identify multiple cost-saving opportunities. ";
+            response += 'Excellent! I can identify multiple cost-saving opportunities. ';
             
             if (userPreferences.diet === 'vegetarian') {
-                response += "Vegetarian diets can save 40-50% compared to meat-based diets when optimized properly. ";
+                response += 'Vegetarian diets can save 40-50% compared to meat-based diets when optimized properly. ';
             }
             
-            response += "Key areas for savings: bulk purchasing, generic brands, and meal prep. ";
+            response += 'Key areas for savings: bulk purchasing, generic brands, and meal prep. ';
         } else if (lowerMessage.includes('expense') || lowerMessage.includes('track spending')) {
-            response += "I can help you track and analyze your health-related spending. ";
-            response += "This includes categorizing expenses and identifying optimization opportunities. ";
+            response += 'I can help you track and analyze your health-related spending. ';
+            response += 'This includes categorizing expenses and identifying optimization opportunities. ';
         } else {
-            response += "I can help you optimize your health and fitness budget. ";
+            response += 'I can help you optimize your health and fitness budget. ';
             
             if (memoryInsights.userPreferences?.budget) {
                 response += `Working with your $${memoryInsights.userPreferences.budget} budget, `;
             }
             
-            response += "I provide budget planning, expense tracking, and cost optimization recommendations. ";
+            response += 'I provide budget planning, expense tracking, and cost optimization recommendations. ';
         }
         
-        response += "What specific budget goals would you like to work on?";
+        response += 'What specific budget goals would you like to work on?';
         
         return response;
     }

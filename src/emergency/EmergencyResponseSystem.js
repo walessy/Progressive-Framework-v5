@@ -382,7 +382,7 @@ class EmergencyResponseSystem extends EventEmitter {
             for (const [agentType, breaker] of this.circuitBreakers) {
                 healthStatus.components[agentType] = {
                     status: breaker.state === 'closed' ? 'healthy' : 
-                           breaker.state === 'half-open' ? 'recovering' : 'unhealthy',
+                        breaker.state === 'half-open' ? 'recovering' : 'unhealthy',
                     failures: breaker.failures,
                     lastFailure: breaker.lastFailureTime
                 };
@@ -484,18 +484,18 @@ class EmergencyResponseSystem extends EventEmitter {
         
         // Mock action implementation
         switch (action) {
-            case 'circuit_break':
-                return { action, success: true, message: 'Circuit breaker activated' };
-            case 'retry':
-                return { action, success: true, message: 'Retry attempted' };
-            case 'log_warning':
-                console.warn(`⚠️ Incident warning: ${incident.id}`);
-                return { action, success: true, message: 'Warning logged' };
-            case 'log_info':
-                console.info(`ℹ️ Incident info: ${incident.id}`);
-                return { action, success: true, message: 'Info logged' };
-            default:
-                return { action, success: true, message: 'Action completed' };
+        case 'circuit_break':
+            return { action, success: true, message: 'Circuit breaker activated' };
+        case 'retry':
+            return { action, success: true, message: 'Retry attempted' };
+        case 'log_warning':
+            console.warn(`⚠️ Incident warning: ${incident.id}`);
+            return { action, success: true, message: 'Warning logged' };
+        case 'log_info':
+            console.info(`ℹ️ Incident info: ${incident.id}`);
+            return { action, success: true, message: 'Info logged' };
+        default:
+            return { action, success: true, message: 'Action completed' };
         }
     }
 

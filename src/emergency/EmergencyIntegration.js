@@ -307,7 +307,7 @@ class EmergencyIntegration {
                 // If emergency response provided a fallback, return it
                 if (emergencyResponse.handled && emergencyResponse.emergency?.recovery?.success) {
                     return {
-                        content: "I encountered an issue but I've recovered. Please try your request again.",
+                        content: 'I encountered an issue but I\'ve recovered. Please try your request again.',
                         success: false,
                         confidence: 0.3,
                         emergency: true,
@@ -423,14 +423,14 @@ class EmergencyIntegration {
         const incident = emergencyResponse.emergency?.incident;
         const recovery = emergencyResponse.emergency?.recovery;
 
-        let response = "I encountered an issue and activated emergency protocols. ";
+        let response = 'I encountered an issue and activated emergency protocols. ';
 
         if (recovery?.success) {
-            response += "The system has recovered successfully. ";
+            response += 'The system has recovered successfully. ';
         } else if (recovery?.fallbackActivated) {
-            response += "I've activated backup systems to continue serving you. ";
+            response += 'I\'ve activated backup systems to continue serving you. ';
         } else {
-            response += "I'm working to resolve the issue. ";
+            response += 'I\'m working to resolve the issue. ';
         }
 
         if (incident?.id) {
@@ -438,10 +438,10 @@ class EmergencyIntegration {
         }
 
         if (emergencyResponse.backupCreated) {
-            response += "A system backup has been created for safety. ";
+            response += 'A system backup has been created for safety. ';
         }
 
-        response += "Please try your request again or rephrase it if the issue persists.";
+        response += 'Please try your request again or rephrase it if the issue persists.';
 
         return response;
     }

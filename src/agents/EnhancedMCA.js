@@ -87,7 +87,7 @@ class EnhancedMasterControlAgent extends BaseAgent {
             await this.storeErrorConversation(request, error, userId);
             
             return {
-                content: "I apologize, but I encountered an issue processing your request. However, I've learned from this and will handle similar requests better in the future.",
+                content: 'I apologize, but I encountered an issue processing your request. However, I\'ve learned from this and will handle similar requests better in the future.',
                 success: false,
                 confidence: 0.1,
                 error: error.message
@@ -330,11 +330,11 @@ class EnhancedMasterControlAgent extends BaseAgent {
         const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']);
         
         return text.toLowerCase()
-                  .replace(/[^\w\s]/g, ' ')
-                  .replace(/\s+/g, ' ')
-                  .trim()
-                  .split(' ')
-                  .filter(word => word.length > 2 && !stopWords.has(word));
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(' ')
+            .filter(word => word.length > 2 && !stopWords.has(word));
     }
 
     async storeErrorConversation(request, error, userId) {

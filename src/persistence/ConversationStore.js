@@ -228,18 +228,18 @@ class ConversationStore {
     // Helper methods for text processing
     processText(text) {
         return text.toLowerCase()
-                  .replace(/[^\w\s]/g, ' ')
-                  .replace(/\s+/g, ' ')
-                  .trim();
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
     extractKeywords(text) {
         const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should']);
         
         return this.processText(text)
-                  .split(' ')
-                  .filter(word => word.length > 2 && !stopWords.has(word))
-                  .slice(0, 10); // Top 10 keywords
+            .split(' ')
+            .filter(word => word.length > 2 && !stopWords.has(word))
+            .slice(0, 10); // Top 10 keywords
     }
 
     calculateComplexity(text) {

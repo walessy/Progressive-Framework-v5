@@ -108,64 +108,64 @@ class FitnessTrackerIntegration {
         let endpoint;
 
         switch (providerName) {
-            case 'strava':
-                payload = {
+        case 'strava':
+            payload = {
+                name: workoutData.title || 'Workout',
+                type: this.mapWorkoutTypeToStrava(workoutData.type),
+                sport_type: this.mapWorkoutTypeToStrava(workoutData.type),
+                start_date_local: workoutData.startTime || new Date().toISOString(),
+                elapsed_time: workoutData.duration * 60, // Convert minutes to seconds
+                distance: workoutData.distance || 0, // in meters
+                description: workoutData.notes || '',
+                trainer: workoutData.isIndoor || false,
+                commute: false
+            };
+            endpoint = '/activities';
+            break;
+
+        case 'myfitnesspal':
+            payload = {
+                exercise: {
                     name: workoutData.title || 'Workout',
-                    type: this.mapWorkoutTypeToStrava(workoutData.type),
-                    sport_type: this.mapWorkoutTypeToStrava(workoutData.type),
-                    start_date_local: workoutData.startTime || new Date().toISOString(),
-                    elapsed_time: workoutData.duration * 60, // Convert minutes to seconds
-                    distance: workoutData.distance || 0, // in meters
-                    description: workoutData.notes || '',
-                    trainer: workoutData.isIndoor || false,
-                    commute: false
-                };
-                endpoint = '/activities';
-                break;
+                    duration_minutes: workoutData.duration || 30,
+                    calories_burned: workoutData.caloriesBurned || this.estimateCalories(workoutData),
+                    date: workoutData.date || new Date().toISOString().split('T')[0],
+                    notes: workoutData.notes || ''
+                }
+            };
+            endpoint = '/exercise/log';
+            break;
 
-            case 'myfitnesspal':
-                payload = {
-                    exercise: {
-                        name: workoutData.title || 'Workout',
-                        duration_minutes: workoutData.duration || 30,
-                        calories_burned: workoutData.caloriesBurned || this.estimateCalories(workoutData),
-                        date: workoutData.date || new Date().toISOString().split('T')[0],
-                        notes: workoutData.notes || ''
-                    }
-                };
-                endpoint = '/exercise/log';
-                break;
+        case 'fitbit':
+            payload = {
+                activityName: workoutData.title || 'Workout',
+                activityTypeId: this.mapWorkoutTypeToFitbit(workoutData.type),
+                durationMillis: (workoutData.duration || 30) * 60 * 1000,
+                startTime: workoutData.startTime || new Date().toISOString(),
+                calories: workoutData.caloriesBurned || this.estimateCalories(workoutData),
+                distance: workoutData.distance || 0,
+                distanceUnit: workoutData.distanceUnit || 'Kilometer'
+            };
+            endpoint = '/activities';
+            break;
 
-            case 'fitbit':
-                payload = {
-                    activityName: workoutData.title || 'Workout',
-                    activityTypeId: this.mapWorkoutTypeToFitbit(workoutData.type),
-                    durationMillis: (workoutData.duration || 30) * 60 * 1000,
-                    startTime: workoutData.startTime || new Date().toISOString(),
-                    calories: workoutData.caloriesBurned || this.estimateCalories(workoutData),
-                    distance: workoutData.distance || 0,
-                    distanceUnit: workoutData.distanceUnit || 'Kilometer'
-                };
-                endpoint = '/activities';
-                break;
+        case 'garmin':
+            payload = {
+                activityName: workoutData.title || 'Workout',
+                activityTypeDTO: {
+                    typeKey: this.mapWorkoutTypeToGarmin(workoutData.type)
+                },
+                startTimeLocal: workoutData.startTime || new Date().toISOString(),
+                duration: (workoutData.duration || 30) * 60, // seconds
+                distance: workoutData.distance || 0,
+                calories: workoutData.caloriesBurned || this.estimateCalories(workoutData),
+                description: workoutData.notes || ''
+            };
+            endpoint = '/activity-service/activity';
+            break;
 
-            case 'garmin':
-                payload = {
-                    activityName: workoutData.title || 'Workout',
-                    activityTypeDTO: {
-                        typeKey: this.mapWorkoutTypeToGarmin(workoutData.type)
-                    },
-                    startTimeLocal: workoutData.startTime || new Date().toISOString(),
-                    duration: (workoutData.duration || 30) * 60, // seconds
-                    distance: workoutData.distance || 0,
-                    calories: workoutData.caloriesBurned || this.estimateCalories(workoutData),
-                    description: workoutData.notes || ''
-                };
-                endpoint = '/activity-service/activity';
-                break;
-
-            default:
-                throw new Error(`Unsupported provider: ${providerName}`);
+        default:
+            throw new Error(`Unsupported provider: ${providerName}`);
         }
 
         const response = await provider.client.post(endpoint, payload);
@@ -216,23 +216,23 @@ class FitnessTrackerIntegration {
         let params = {};
 
         switch (providerName) {
-            case 'strava':
-                endpoint = '/athlete/activities';
-                params = {
-                    after: Math.floor(startDate.getTime() / 1000),
-                    before: Math.floor(endDate.getTime() / 1000)
-                };
-                break;
-            case 'fitbit':
-                endpoint = '/activities/list';
-                params = {
-                    afterDate: startDate.toISOString().split('T')[0],
-                    sort: 'desc',
-                    limit: 50
-                };
-                break;
-            default:
-                return [];
+        case 'strava':
+            endpoint = '/athlete/activities';
+            params = {
+                after: Math.floor(startDate.getTime() / 1000),
+                before: Math.floor(endDate.getTime() / 1000)
+            };
+            break;
+        case 'fitbit':
+            endpoint = '/activities/list';
+            params = {
+                afterDate: startDate.toISOString().split('T')[0],
+                sort: 'desc',
+                limit: 50
+            };
+            break;
+        default:
+            return [];
         }
 
         const response = await provider.client.get(endpoint, { params });

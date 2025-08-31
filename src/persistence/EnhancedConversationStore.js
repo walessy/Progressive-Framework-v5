@@ -590,7 +590,7 @@ class EnhancedConversationStore extends ConversationStore {
             if (successfulMatches.length > 0) {
                 recommendations.push({
                     type: 'similar_success',
-                    message: `Based on similar successful conversations, I recommend focusing on specific actionable steps.`,
+                    message: 'Based on similar successful conversations, I recommend focusing on specific actionable steps.',
                     confidence: 0.8,
                     basedOn: successfulMatches.length
                 });

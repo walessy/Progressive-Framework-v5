@@ -473,11 +473,11 @@ class SemanticSearchEngine {
 
     preprocessText(text) {
         return text.toLowerCase()
-                  .replace(/[^\w\s]/g, ' ')
-                  .replace(/\s+/g, ' ')
-                  .trim()
-                  .split(' ')
-                  .filter(word => word.length > 2);
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(' ')
+            .filter(word => word.length > 2);
     }
 
     calculateTermFrequency(words) {

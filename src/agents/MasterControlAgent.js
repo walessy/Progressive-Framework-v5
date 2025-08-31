@@ -291,23 +291,23 @@ class MasterControlAgent {
 
         // Handle different agent types
         switch (agentType) {
-            case 'NPA':
-                return this.handleNutritionRequest(requestData, analysis);
-            case 'WPA':
-                return this.handleWorkoutRequest(requestData, analysis);
-            case 'MCA':
-                return this.handleGeneralRequest(requestData, analysis);
-            default:
-                throw new Error(`Unknown agent type: ${agentType}`);
+        case 'NPA':
+            return this.handleNutritionRequest(requestData, analysis);
+        case 'WPA':
+            return this.handleWorkoutRequest(requestData, analysis);
+        case 'MCA':
+            return this.handleGeneralRequest(requestData, analysis);
+        default:
+            throw new Error(`Unknown agent type: ${agentType}`);
         }
     }
 
     handleNutritionRequest(requestData, analysis) {
         const nutritionResponses = [
-            "For optimal nutrition, focus on whole foods including lean proteins, complex carbohydrates, and plenty of vegetables.",
-            "A balanced meal should include protein (25%), healthy carbs (50%), and vegetables (25%) with some healthy fats.",
-            "Stay hydrated and aim for 5-7 servings of fruits and vegetables daily for optimal micronutrient intake.",
-            "Consider timing your meals around your activity level - more carbs around workouts, protein throughout the day."
+            'For optimal nutrition, focus on whole foods including lean proteins, complex carbohydrates, and plenty of vegetables.',
+            'A balanced meal should include protein (25%), healthy carbs (50%), and vegetables (25%) with some healthy fats.',
+            'Stay hydrated and aim for 5-7 servings of fruits and vegetables daily for optimal micronutrient intake.',
+            'Consider timing your meals around your activity level - more carbs around workouts, protein throughout the day.'
         ];
 
         return {
@@ -326,10 +326,10 @@ class MasterControlAgent {
 
     handleWorkoutRequest(requestData, analysis) {
         const workoutResponses = [
-            "For effective workouts, combine strength training 3x/week with cardiovascular exercise 2-3x/week.",
-            "Progressive overload is key - gradually increase weight, reps, or intensity over time.",
-            "Focus on compound movements like squats, deadlifts, and push-ups for maximum efficiency.",
-            "Allow 48-72 hours between training the same muscle groups for optimal recovery."
+            'For effective workouts, combine strength training 3x/week with cardiovascular exercise 2-3x/week.',
+            'Progressive overload is key - gradually increase weight, reps, or intensity over time.',
+            'Focus on compound movements like squats, deadlifts, and push-ups for maximum efficiency.',
+            'Allow 48-72 hours between training the same muscle groups for optimal recovery.'
         ];
 
         return {
@@ -426,9 +426,9 @@ class MasterControlAgent {
             data: {
                 basicResponse: this.generateBasicResponse(requestData.message),
                 suggestions: [
-                    "Try asking a simpler question",
-                    "Check back in a few minutes when systems recover",
-                    "Contact support if this continues"
+                    'Try asking a simpler question',
+                    'Check back in a few minutes when systems recover',
+                    'Contact support if this continues'
                 ],
                 timestamp: new Date().toISOString()
             }
@@ -438,7 +438,7 @@ class MasterControlAgent {
     generateBasicFallbackResponse(requestData, error) {
         return {
             success: false,
-            message: "I'm experiencing technical difficulties. Please try again shortly.",
+            message: 'I\'m experiencing technical difficulties. Please try again shortly.',
             error: error.message,
             fallback: true,
             data: {
@@ -573,18 +573,18 @@ class MasterControlAgent {
         const suggestions = [];
         
         if (keywords.some(word => ['nutrition', 'meal', 'food', 'eat'].includes(word))) {
-            suggestions.push("Try asking about basic nutrition principles");
-            suggestions.push("Ask for simple meal ideas");
+            suggestions.push('Try asking about basic nutrition principles');
+            suggestions.push('Ask for simple meal ideas');
         }
         
         if (keywords.some(word => ['workout', 'exercise', 'fitness', 'train'].includes(word))) {
-            suggestions.push("Try asking about basic exercises");
-            suggestions.push("Ask for simple workout routines");
+            suggestions.push('Try asking about basic exercises');
+            suggestions.push('Ask for simple workout routines');
         }
         
         return suggestions.length > 0 ? suggestions : [
-            "Ask me about nutrition or fitness basics",
-            "Try a simpler version of your question"
+            'Ask me about nutrition or fitness basics',
+            'Try a simpler version of your question'
         ];
     }
 
@@ -593,14 +593,14 @@ class MasterControlAgent {
         const keywords = message.toLowerCase();
         
         if (keywords.includes('nutrition') || keywords.includes('food')) {
-            return "For nutrition basics: focus on whole foods, balanced macronutrients, and staying hydrated.";
+            return 'For nutrition basics: focus on whole foods, balanced macronutrients, and staying hydrated.';
         }
         
         if (keywords.includes('workout') || keywords.includes('exercise')) {
-            return "For fitness basics: aim for 150 minutes of moderate exercise weekly, include strength training.";
+            return 'For fitness basics: aim for 150 minutes of moderate exercise weekly, include strength training.';
         }
         
-        return "I'm here to help with nutrition and fitness questions. Please try rephrasing your request.";
+        return 'I\'m here to help with nutrition and fitness questions. Please try rephrasing your request.';
     }
 }
 

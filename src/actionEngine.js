@@ -59,52 +59,52 @@ class EnhancedActionEngine {
             let result;
 
             switch (actionType) {
-                case 'schedule_event':
-                    result = await this.handleScheduleEvent(parameters, context);
-                    break;
+            case 'schedule_event':
+                result = await this.handleScheduleEvent(parameters, context);
+                break;
                 
-                case 'list_events':
-                    result = await this.handleListEvents(parameters, context);
-                    break;
+            case 'list_events':
+                result = await this.handleListEvents(parameters, context);
+                break;
                 
-                case 'order_food':
-                    result = await this.handleOrderFood(parameters, context);
-                    break;
+            case 'order_food':
+                result = await this.handleOrderFood(parameters, context);
+                break;
                 
-                case 'search_restaurants':
-                    result = await this.handleSearchRestaurants(parameters, context);
-                    break;
+            case 'search_restaurants':
+                result = await this.handleSearchRestaurants(parameters, context);
+                break;
                 
-                case 'track_food_order':
-                    result = await this.handleTrackFoodOrder(parameters, context);
-                    break;
+            case 'track_food_order':
+                result = await this.handleTrackFoodOrder(parameters, context);
+                break;
                 
-                case 'log_workout':
-                    result = await this.handleLogWorkout(parameters, context);
-                    break;
+            case 'log_workout':
+                result = await this.handleLogWorkout(parameters, context);
+                break;
                 
-                case 'get_recent_workouts':
-                    result = await this.handleGetRecentWorkouts(parameters, context);
-                    break;
+            case 'get_recent_workouts':
+                result = await this.handleGetRecentWorkouts(parameters, context);
+                break;
                 
-                case 'log_nutrition':
-                    result = await this.handleLogNutrition(parameters, context);
-                    break;
+            case 'log_nutrition':
+                result = await this.handleLogNutrition(parameters, context);
+                break;
                 
-                case 'plan_healthy_day':
-                    result = await this.handlePlanHealthyDay(parameters, context);
-                    break;
+            case 'plan_healthy_day':
+                result = await this.handlePlanHealthyDay(parameters, context);
+                break;
                 
-                case 'fitness_progress_report':
-                    result = await this.handleFitnessProgressReport(parameters, context);
-                    break;
+            case 'fitness_progress_report':
+                result = await this.handleFitnessProgressReport(parameters, context);
+                break;
                 
-                default:
-                    result = {
-                        success: false,
-                        error: `Unknown action type: ${actionType}`,
-                        message: `❌ Action "${actionType}" is not supported`
-                    };
+            default:
+                result = {
+                    success: false,
+                    error: `Unknown action type: ${actionType}`,
+                    message: `❌ Action "${actionType}" is not supported`
+                };
             }
 
             // Record action in history

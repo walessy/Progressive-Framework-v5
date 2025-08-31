@@ -355,71 +355,71 @@ class EmergencyResponseSystem extends EventEmitter {
 
         try {
             switch (action) {
-                case 'immediate_isolation':
-                    actionResult.success = await this.isolateAffectedComponent(incident);
-                    break;
+            case 'immediate_isolation':
+                actionResult.success = await this.isolateAffectedComponent(incident);
+                break;
 
-                case 'emergency_rollback':
-                    actionResult.success = await this.performEmergencyRollback(incident);
-                    actionResult.rollbackPerformed = true;
-                    break;
+            case 'emergency_rollback':
+                actionResult.success = await this.performEmergencyRollback(incident);
+                actionResult.rollbackPerformed = true;
+                break;
 
-                case 'activate_backup_systems':
-                    actionResult.success = await this.activateBackupSystems(incident);
-                    actionResult.fallbackActivated = true;
-                    break;
+            case 'activate_backup_systems':
+                actionResult.success = await this.activateBackupSystems(incident);
+                actionResult.fallbackActivated = true;
+                break;
 
-                case 'isolate_affected_component':
-                    actionResult.success = await this.isolateComponent(incident);
-                    break;
+            case 'isolate_affected_component':
+                actionResult.success = await this.isolateComponent(incident);
+                break;
 
-                case 'activate_circuit_breaker':
-                    actionResult.success = await this.activateCircuitBreaker(incident);
-                    break;
+            case 'activate_circuit_breaker':
+                actionResult.success = await this.activateCircuitBreaker(incident);
+                break;
 
-                case 'attempt_automatic_recovery':
-                    actionResult.success = await this.attemptAutomaticRecovery(incident);
-                    actionResult.recoveryComplete = actionResult.success;
-                    break;
+            case 'attempt_automatic_recovery':
+                actionResult.success = await this.attemptAutomaticRecovery(incident);
+                actionResult.recoveryComplete = actionResult.success;
+                break;
 
-                case 'agent_fallback':
-                    actionResult.success = await this.activateAgentFallback(incident);
-                    actionResult.fallbackActivated = true;
-                    break;
+            case 'agent_fallback':
+                actionResult.success = await this.activateAgentFallback(incident);
+                actionResult.fallbackActivated = true;
+                break;
 
-                case 'route_to_alternative':
-                    actionResult.success = await this.routeToAlternative(incident);
-                    break;
+            case 'route_to_alternative':
+                actionResult.success = await this.routeToAlternative(incident);
+                break;
 
-                case 'database_reconnection':
-                    actionResult.success = await this.attemptDatabaseReconnection(incident);
-                    actionResult.recoveryComplete = actionResult.success;
-                    break;
+            case 'database_reconnection':
+                actionResult.success = await this.attemptDatabaseReconnection(incident);
+                actionResult.recoveryComplete = actionResult.success;
+                break;
 
-                case 'use_cached_data':
-                    actionResult.success = await this.activateCachedDataMode(incident);
-                    actionResult.fallbackActivated = true;
-                    break;
+            case 'use_cached_data':
+                actionResult.success = await this.activateCachedDataMode(incident);
+                actionResult.fallbackActivated = true;
+                break;
 
-                case 'retry_with_backoff':
-                    actionResult.success = await this.retryWithBackoff(incident);
-                    actionResult.recoveryComplete = actionResult.success;
-                    break;
+            case 'retry_with_backoff':
+                actionResult.success = await this.retryWithBackoff(incident);
+                actionResult.recoveryComplete = actionResult.success;
+                break;
 
-                case 'log_error':
-                    actionResult.success = await this.logErrorToSystem(incident);
-                    break;
+            case 'log_error':
+                actionResult.success = await this.logErrorToSystem(incident);
+                break;
 
-                case 'provide_fallback_response':
-                    actionResult.success = await this.provideFallbackResponse(incident);
-                    actionResult.fallbackActivated = true;
-                    actionResult.recoveryComplete = true;
-                    break;
+            case 'provide_fallback_response':
+                actionResult.success = await this.provideFallbackResponse(incident);
+                actionResult.fallbackActivated = true;
+                actionResult.recoveryComplete = true;
+                break;
 
-                default:
-                    console.warn(`Unknown emergency action: ${action}`);
-                    actionResult.success = false;
-                    actionResult.error = `Unknown action: ${action}`;
+            default:
+                console.warn(`Unknown emergency action: ${action}`);
+                actionResult.success = false;
+                actionResult.error = `Unknown action: ${action}`;
             }
 
         } catch (actionError) {
@@ -596,7 +596,7 @@ class EmergencyResponseSystem extends EventEmitter {
         try {
             // Generate a safe, generic response
             const fallbackResponse = {
-                content: "I encountered an issue processing your request, but I'm working to resolve it. Please try again in a moment or rephrase your question.",
+                content: 'I encountered an issue processing your request, but I\'m working to resolve it. Please try again in a moment or rephrase your question.',
                 success: false,
                 confidence: 0.1,
                 fallback: true,
