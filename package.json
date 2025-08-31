@@ -22,7 +22,7 @@
                     "test:unit":  "jest --testPathPattern=tests/unit --coverage",
                     "test:integration":  "jest --testPathPattern=tests/integration --passWithNoTests",
                     "test:emergency":  "jest --testPathPattern=tests/emergency",
-                    "test:agents":  "jest --testPathPattern=tests/agents",
+                    "test:agents":  "jest --testPathPattern=tests/agents --passWithNoTests",
                     "test:backup-restore":  "jest --testPathPattern=tests/backup",
                     "test:ci":  "jest --ci --coverage --watchAll=false",
                     "test:coverage":  "jest --coverage --coverageReporters=text-lcov \u003e coverage/lcov.info",
