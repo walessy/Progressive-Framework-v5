@@ -15,79 +15,12 @@ env:
 
 jobs:
   # ========================================
-  # SHARED DEPENDENCY INSTALLATION
-  # ========================================
-  
-  setup:
-    name: Setup Dependencies
-    runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.key }}
-      
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:cls
-
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Generate cache key
-        id: cache-key
-        run: |
-          echo "key=npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-${{ env.NODE_VERSION }}" >> $GITHUB_OUTPUT
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ steps.cache-key.outputs.key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-            npm-${{ runner.os }}-
-
-      - name: Configure npm for reliability
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config set fetch-timeout 60000
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 10000
-          npm config set fetch-retry-maxtimeout 60000
-          npm config set audit false
-          npm config set fund false
-
-      - name: Clean install dependencies
-        if: steps.cache-npm.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache miss - installing dependencies..."
-          rm -rf node_modules package-lock.json
-          npm install --prefer-offline --no-audit --progress=false
-        timeout-minutes: 10
-        env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-
-      - name: Verify installation
-        run: |
-          echo "Verifying installation..."
-          npm list --depth=0 || echo "Some peer dependency warnings (normal)"
-          echo "Dependencies installed successfully"
-
-  # ========================================
   # CODE QUALITY & TESTING
   # ========================================
   
   code-quality:
     name: Code Quality Analysis
     runs-on: ubuntu-latest
-    needs: setup
     
     steps:
       - name: Checkout repository
@@ -99,25 +32,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-
-      - name: Quick dependency check
+      - name: Install dependencies
         run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "Dependencies restored from cache"
-          fi
-        timeout-minutes: 3
+          npm config set registry https://registry.npmjs.org/
+          npm install --prefer-offline --no-audit --progress=false
+        timeout-minutes: 10
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
 
       - name: Run ESLint
         run: npm run lint
@@ -147,7 +68,6 @@ jobs:
   test-suite:
     name: Test Suite (unit)
     runs-on: ubuntu-latest
-    needs: setup
     
     steps:
       - name: Checkout repository
@@ -159,25 +79,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-
-      - name: Quick dependency check
+      - name: Install dependencies
         run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "Dependencies restored from cache"
-          fi
-        timeout-minutes: 3
+          npm config set registry https://registry.npmjs.org/
+          npm install --prefer-offline --no-audit --progress=false
+        timeout-minutes: 10
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
 
       - name: Create test data directories
         run: |
@@ -217,7 +125,6 @@ jobs:
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: setup
     if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     
     steps:
@@ -230,23 +137,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: Quick dependency check
+      - name: Install dependencies
         run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "Dependencies restored from cache"
-          fi
-        timeout-minutes: 3
+          npm config set registry https://registry.npmjs.org/
+          npm install --prefer-offline --no-audit --progress=false
+        timeout-minutes: 10
+        env:
+          NODE_OPTIONS: '--max-old-space-size=6144'
 
       - name: Build project
         run: npm run build
@@ -360,7 +257,7 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -373,12 +270,6 @@ jobs:
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         continue-on-error: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('trivy-results.sarif') != ''  # Add this condition
-        with:
-          sarif_file: 'trivy-results.sarif'
 
   # ========================================
   # STAGING DEPLOYMENT
