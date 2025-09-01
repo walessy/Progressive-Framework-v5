@@ -85,7 +85,8 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --timeout=300000
+        timeout-minutes: 5
 
       - name: Create test data directories
         run: |
