@@ -1,467 +1,140 @@
-name: Progressive Framework V5 - CI/CD Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-  release:
-    types: [ published ]
-
-env:
-  NODE_VERSION: '20'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: progressive-framework-v5
-
-jobs:
-  # ========================================
-  # SHARED DEPENDENCY INSTALLATION
-  # ========================================
-  
-  setup:
-    name: Setup Dependencies
-    runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.key }}
-      
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Generate cache key
-        id: cache-key
-        run: |
-          echo "key=npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-${{ env.NODE_VERSION }}" >> $GITHUB_OUTPUT
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ steps.cache-key.outputs.key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-            npm-${{ runner.os }}-
-
-      - name: Configure npm for reliability
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config set fetch-timeout 60000
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 10000
-          npm config set fetch-retry-maxtimeout 60000
-          npm config set audit false
-          npm config set fund false
-
-      - name: Clean install dependencies
-        if: steps.cache-npm.outputs.cache-hit != 'true'
-        run: |
-          echo "Cache miss - installing dependencies..."
-          rm -rf node_modules package-lock.json
-          npm install --prefer-offline --no-audit --progress=false
-        timeout-minutes: 10
-        env:
-          NODE_OPTIONS: '--max-old-space-size=4096'
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-
-      - name: Verify installation
-        run: |
-          echo "Verifying installation..."
-          node -e "console.log('Node.js version:', process.version)"
-          node -e "console.log('NPM version:', require('child_process').execSync('npm --version').toString().trim())"
-          node -e "try { require('express'); console.log('✅ Express loaded'); } catch(e) { console.log('❌ Express failed:', e.message); }"
-          node -e "try { require('winston'); console.log('✅ Winston loaded'); } catch(e) { console.log('❌ Winston failed:', e.message); }"
-          node -e "console.log('✅ Installation verification completed')"
-        timeout-minutes: 2
-
-  # ========================================
-  # CODE QUALITY & TESTING
-  # ========================================
-  
-  code-quality:
-    name: Code Quality Analysis
-    runs-on: ubuntu-latest
-    needs: setup
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Restore dependencies cache
-        uses: actions/cache/restore@v3
-        id: cache-restore
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-
-      - name: Install dependencies if needed
-        run: |
-          echo "Cache hit: ${{ steps.cache-restore.outputs.cache-hit }}"
-          if [ "${{ steps.cache-restore.outputs.cache-hit }}" != "true" ]; then
-            echo "Cache miss - installing dependencies..."
-            rm -rf node_modules package-lock.json || true
-            npm install --prefer-offline --no-audit --progress=false
-          else
-            echo "✅ Using cached dependencies"
-            # Quick verification
-            node -e "require('express'); console.log('✅ Dependencies working')" || npm install --prefer-offline --no-audit --progress=false
-          fi
-        timeout-minutes: 8
-        env:
-          NPM_CONFIG_LOGLEVEL: error
-          NODE_OPTIONS: '--max-old-space-size=4096'
-
-      - name: Run ESLint
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Run Prettier check
-        run: npm run format:check || echo "Prettier check not configured, skipping..."
-        continue-on-error: true
-
-      - name: Run security audit
-        run: npm audit --audit-level=high || echo "No critical vulnerabilities found"
-        continue-on-error: true
-
-      - name: Upload code quality results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: code-quality-results
-          path: |
-            lint-results.json
-          retention-days: 7
-
-  # ========================================
-  # UNIT & INTEGRATION TESTS
-  # ========================================
-
-  test-suite:
-    name: Test Suite (unit)
-    runs-on: ubuntu-latest
-    needs: setup
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
-
-      - name: Quick dependency check
-        run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "Dependencies restored from cache"
-          fi
-        timeout-minutes: 3
-
-      - name: Create test data directories
-        run: |
-          mkdir -p data/conversations
-          mkdir -p data/budgets
-          mkdir -p data/emergency
-          mkdir -p data/backups
-
-      - name: Run Tests
-        run: npm run test:ci
-        timeout-minutes: 15
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            test-results/
-            coverage/
-            logs/
-          retention-days: 7
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        if: success()
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-        continue-on-error: true
-
-  # ========================================
-  # PERFORMANCE & LOAD TESTING
-  # ========================================
-
-  performance-tests:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    needs: setup
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Restore dependencies cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: ${{ needs.setup.outputs.cache-key }}
-
-      - name: Quick dependency check
-        run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "Dependencies restored from cache"
-          fi
-        timeout-minutes: 3
-
-      - name: Build project
-        run: npm run build
-        timeout-minutes: 5
-
-      - name: Start test server
-        run: |
-          npm start &
-          sleep 10
-        env:
-          NODE_ENV: test
-          PORT: 3000
-
-      - name: Wait for server to be ready
-        run: |
-          timeout 30s bash -c 'until curl -f http://localhost:3000/health || curl -f http://localhost:3000/ || curl -f http://localhost:3000/api/health; do sleep 2; done' || echo "Server readiness check completed"
-
-      - name: Run performance tests
-        run: |
-          echo "Running performance tests..."
-          # npm run test:performance || echo "Performance tests not configured yet"
-        continue-on-error: true
-
-      - name: Upload performance results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: performance-results
-          path: |
-            performance-results/
-            load-test-results/
-          retention-days: 7
-
-  # ========================================
-  # DOCKER BUILD & PUSH
-  # ========================================
-
-  docker-build:
-    name: Docker Build & Push
-    runs-on: ubuntu-latest
-    needs: [code-quality, test-suite]
-    if: github.event_name != 'pull_request'
-    
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ========================================
-  # SECURITY SCANNING
-  # ========================================
-
-  security-scan:
-    name: Security Scanning
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    if: github.event_name != 'pull_request'
-    
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-        continue-on-error: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
-        continue-on-error: true
-
-      - name: Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-        continue-on-error: true
-
-  # ========================================
-  # STAGING DEPLOYMENT
-  # ========================================
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [performance-tests, docker-build, security-scan]
-    if: github.ref == 'refs/heads/develop'
-    environment: 
-      name: staging
-      url: https://staging.yourdomain.com
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy to staging environment
-        run: |
-          echo "Deploying to staging environment..."
-          # Add your actual deployment commands here
-          
-      - name: Run smoke tests against staging
-        run: |
-          echo "Running smoke tests..."
-          # npm run test:smoke:staging || echo "Smoke tests not configured yet"
-        env:
-          STAGING_URL: ${{ secrets.STAGING_URL }}
-          API_KEY: ${{ secrets.STAGING_API_KEY }}
-        continue-on-error: true
-
-      - name: Update deployment status
-        run: |
-          echo "Staging deployment completed"
-
-  # ========================================
-  # PRODUCTION DEPLOYMENT
-  # ========================================
-
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [deploy-staging]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    environment:
-      name: production
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create pre-deployment backup
-        run: |
-          echo "Creating pre-deployment backup..."
-          # Add your backup commands here
-          
-      - name: Deploy to production environment
-        run: |
-          echo "Deploying to production environment..."
-          # Add your actual deployment commands here
-          
-      - name: Run production health checks
-        run: |
-          echo "Running production health checks..."
-          # Add your health check commands here
-        env:
-          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
-          API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "Production deployment successful!"
-          # Add notification commands here
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Production deployment failed - check logs"
-          # Add rollback commands here
+{
+    "name": "progressive-framework-v5",
+    "version": "1.0.0",
+    "description": "Complete AI Agent Orchestration System with Emergency Response Capabilities",
+    "main": "server.js",
+    "engines": {
+      "node": ">=20.0.0",
+      "npm": ">=10.0.0"
+    },
+    "scripts": {
+      "start": "node server.js",
+      "dev": "nodemon server.js",
+      "dev:debug": "nodemon --inspect=0.0.0.0:9229 server.js",
+      "build": "npm run lint && npm run test:ci",
+      "prepare-ci": "npm run setup:directories",
+      "setup:directories": "node -e \"const fs = require('fs'); ['data', 'data/conversations', 'data/budgets', 'data/emergency', 'data/backups', 'logs', 'coverage', 'test-results'].forEach(dir => fs.mkdirSync(dir, { recursive: true })); console.log('Directories created successfully');\"",
+      "lint": "eslint src/ --ext .js --format json --output-file lint-results.json || eslint src/ --ext .js",
+      "lint:fix": "eslint src/ --ext .js --fix",
+      "format": "prettier --write \"src/**/*.js\" \"*.js\"",
+      "format:check": "prettier --check \"src/**/*.js\" \"*.js\"",
+      "test": "npm run setup:directories && jest --testPathPattern=tests/unit --coverage --passWithNoTests",
+      "test:unit": "npm run setup:directories && jest --testPathPattern=tests/unit --coverage",
+      "test:integration": "npm run setup:directories && jest --testPathPattern=tests/integration --passWithNoTests",
+      "test:emergency": "npm run setup:directories && jest --testPathPattern=tests/emergency --verbose --detectOpenHandles",
+      "test:agents": "npm run setup:directories && jest --testPathPattern=tests/agents --passWithNoTests",
+      "test:backup-restore": "npm run setup:directories && jest --testPathPattern=tests/backup",
+      "test:ci": "npm run setup:directories && jest --ci --coverage --watchAll=false --passWithNoTests",
+      "test:coverage": "npm run setup:directories && jest --coverage --coverageReporters=text-lcov > coverage/lcov.info",
+      "test:watch": "jest --watch",
+      "docker:build": "docker build -t progressive-framework-v5 .",
+      "security:audit": "npm audit --audit-level=moderate",
+      "security:fix": "npm audit fix"
+    },
+    "keywords": [
+      "ai-agents",
+      "master-control-agent",
+      "nutrition-planning",
+      "workout-planning",
+      "budget-management",
+      "emergency-response",
+      "circuit-breaker",
+      "conversation-intelligence",
+      "semantic-search",
+      "enterprise-ai",
+      "production-ready"
+    ],
+    "author": "Progressive Framework V5 Team",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/your-org/progressive-framework-v5.git"
+    },
+    "dependencies": {
+      "compression": "^1.7.4",
+      "cors": "^2.8.5",
+      "express": "^4.21.2",
+      "express-rate-limit": "^8.0.1",
+      "fs-extra": "^11.1.1",
+      "helmet": "^7.0.0",
+      "leven": "^4.0.0",
+      "morgan": "^1.10.0",
+      "natural": "^8.1.0",
+      "stemmer": "^2.0.1",
+      "stopword": "^3.1.5",
+      "winston": "^3.10.0"
+    },
+    "devDependencies": {
+      "@babel/core": "^7.22.10",
+      "@babel/preset-env": "^7.22.10",
+      "artillery": "^2.0.1",
+      "eslint": "^8.57.0",
+      "@eslint/js": "^8.57.0",
+      "http-server": "^14.1.1",
+      "jest": "^29.7.0",
+      "jsdoc": "^4.0.2",
+      "nodemon": "^3.0.1",
+      "prettier": "^3.0.2",
+      "supertest": "^7.1.3"
+    },
+    "eslintConfig": {
+      "env": {
+        "node": true,
+        "es2021": true,
+        "jest": true
+      },
+      "extends": [
+        "eslint:recommended"
+      ],
+      "parserOptions": {
+        "ecmaVersion": 2021,
+        "sourceType": "module"
+      },
+      "rules": {
+        "no-console": "warn",
+        "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "no-undef": "error",
+        "semi": ["error", "always"],
+        "quotes": ["error", "single"],
+        "indent": ["error", 4]
+      }
+    },
+    "prettier": {
+      "singleQuote": true,
+      "tabWidth": 4,
+      "semi": true,
+      "trailingComma": "es5",
+      "printWidth": 100
+    },
+    "nodemonConfig": {
+      "watch": [
+        "src/",
+        "server.js"
+      ],
+      "ext": "js,json",
+      "ignore": [
+        "data/",
+        "logs/",
+        "coverage/",
+        "node_modules/"
+      ],
+      "env": {
+        "NODE_ENV": "development",
+        "DEBUG": "progressive:*"
+      }
+    },
+    "jest": {
+      "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+      "testPathIgnorePatterns": ["/node_modules/"],
+      "collectCoverageFrom": [
+        "src/**/*.js",
+        "!src/**/*.test.js", 
+        "!src/**/*.spec.js"
+      ],
+      "testTimeout": 30000,
+      "detectOpenHandles": true,
+      "forceExit": true,
+      "maxWorkers": 4,
+      "testEnvironment": "node"
+    }
+  }
