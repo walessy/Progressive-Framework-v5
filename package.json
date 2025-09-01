@@ -103,7 +103,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Restore dependencies cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
+        id: cache-restore
         with:
           path: |
             ~/.npm
@@ -112,15 +113,22 @@ jobs:
           restore-keys: |
             npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
 
-      - name: Quick dependency check
+      - name: Install dependencies if needed
         run: |
-          if [ ! -d "node_modules" ]; then
-            echo "Cache miss - installing dependencies quickly..."
-            npm ci --prefer-offline --no-audit --progress=false
+          echo "Cache hit: ${{ steps.cache-restore.outputs.cache-hit }}"
+          if [ "${{ steps.cache-restore.outputs.cache-hit }}" != "true" ]; then
+            echo "Cache miss - installing dependencies..."
+            rm -rf node_modules package-lock.json || true
+            npm install --prefer-offline --no-audit --progress=false
           else
-            echo "Dependencies restored from cache"
+            echo "✅ Using cached dependencies"
+            # Quick verification
+            node -e "require('express'); console.log('✅ Dependencies working')" || npm install --prefer-offline --no-audit --progress=false
           fi
-        timeout-minutes: 3
+        timeout-minutes: 8
+        env:
+          NPM_CONFIG_LOGLEVEL: error
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Run ESLint
         run: npm run lint
