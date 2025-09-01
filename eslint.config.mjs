@@ -1,4 +1,4 @@
-﻿// eslint.config.js - ESLint v9 Flat Config
+﻿// eslint.config.mjs - ESLint v9 Flat Config (ES Module)
 import js from "@eslint/js";
 
 export default [
