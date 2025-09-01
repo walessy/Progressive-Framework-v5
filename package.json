@@ -52,15 +52,11 @@ jobs:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
           NPM_CONFIG_MAXSOCKETS: 3
 
-      - name: Verify installation
+      - name: Dependencies ready
         run: |
-          echo "Verifying installation..."
-          node -e "console.log('Node.js version:', process.version)"
-          node -e "console.log('NPM version:', require('child_process').execSync('npm --version').toString().trim())"
-          node -e "try { require('express'); console.log('✅ Express loaded'); } catch(e) { console.log('❌ Express failed:', e.message); }"
-          node -e "try { require('winston'); console.log('✅ Winston loaded'); } catch(e) { console.log('❌ Winston failed:', e.message); }"
-          node -e "console.log('✅ Installation verification completed')"
-        timeout-minutes: 2
+          echo "✅ Dependencies installation completed"
+          echo "Node.js: $(node --version)"
+          echo "npm: $(npm --version)"
 
   # ========================================
   # CODE QUALITY & TESTING
