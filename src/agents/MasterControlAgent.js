@@ -19,7 +19,7 @@ class MasterControlAgent {
         this.systemHealth = 'healthy';
         
         // Initialize synchronously for immediate availability
-        this.initializeAgents();
+        this.initializeAgents();npm test
         this.emergencyInterface = this.emergencySystem.getEmergencyInterface();
         this.setupEmergencyHandlers();
     }
