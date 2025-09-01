@@ -176,16 +176,15 @@
         }
     },
     "jest": {
-        "setupFilesAfterEnv": [
-            "<rootDir>/tests/setup.js"
-        ],
-        "testPathIgnorePatterns": [
-            "/node_modules/"
-        ],
-        "collectCoverageFrom": [
-            "src/**/*.js",
-            "!src/**/*.test.js",
-            "!src/**/*.spec.js"
-        ]
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "testPathIgnorePatterns": ["/node_modules/"],
+    "collectCoverageFrom": [
+        "src/**/*.js",
+        "!src/**/*.test.js", 
+        "!src/**/*.spec.js"
+    ],
+    "testTimeout": 15000,
+    "detectOpenHandles": true,
+    "forceExit": true
     }
 }
