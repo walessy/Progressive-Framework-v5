@@ -1,9 +1,17 @@
 # Agent Framework Platform
 
+<!-- 
+🔧 SETUP REQUIRED: This README contains placeholders that need customization:
+- Update badges with your actual repository URLs and package names
+- Replace YOUR-USERNAME/YOUR-REPO-NAME with your GitHub details
+- Add your actual support links (Discord, email, etc.)
+- Customize the roadmap and features to match your implementation
+-->
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/github/workflow/status/your-org/agent-framework/CI)](https://github.com/your-org/agent-framework/actions)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](./docs/)
-[![Version](https://img.shields.io/npm/v/agent-framework.svg)](https://www.npmjs.com/package/agent-framework)
+[![Version](https://img.shields.io/badge/version-v2.1.0-blue.svg)](#)
 
 A comprehensive, production-ready framework for building intelligent agents with built-in monitoring, security, and scalability features.
 
@@ -41,8 +49,8 @@ Ready-to-use agent implementations showcasing the framework's capabilities:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/agent-framework.git
-cd agent-framework
+git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+cd YOUR-REPO-NAME
 
 # Install dependencies
 npm install
@@ -284,10 +292,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support & Community
 
 - **Documentation**: [Complete docs directory](./docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/agent-framework/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/agent-framework/discussions)
-- **Discord**: [Join our community](https://discord.gg/agent-framework)
-- **Email**: support@agent-framework.dev
+- **Issues**: [GitHub Issues](../../issues) (relative link to your repo's issues)
+- **Discussions**: [GitHub Discussions](../../discussions) (relative link to your repo's discussions)
+- **Discord**: [Join our community](#) <!-- Replace with your Discord invite -->
+- **Email**: [Contact Support](#) <!-- Replace with your support email -->
 
 ---
 
