@@ -289,10 +289,13 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript,typescript
+
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v2
-        with:
-          languages: javascript
 
   # ========================================
   # STAGING DEPLOYMENT
@@ -303,7 +306,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [performance-tests, docker-build, security-scan]
     if: github.ref == 'refs/heads/develop'
-    environment: staging
+    environment: 
+      name: staging
+      url: https://staging.yourdomain.com
     
     steps:
       - name: Checkout repository
@@ -347,7 +352,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-staging]
     if: github.event_name == 'release' && github.event.action == 'published'
-    environment: production
+    environment:
+      name: production
     
     steps:
       - name: Checkout repository
