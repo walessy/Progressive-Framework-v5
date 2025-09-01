@@ -15,7 +15,7 @@ env:
 
 jobs:
   # ========================================
-  # SHARED DEPENDENCY INSTALLATION
+  # SETUP & DEPENDENCY MANAGEMENT
   # ========================================
   
   setup:
@@ -48,39 +48,24 @@ jobs:
           restore-keys: |
             npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
 
-      - name: Configure npm for reliability
-        run: |
-          npm config set registry https://registry.npmjs.org/
-          npm config set fetch-timeout 60000
-          npm config set fetch-retries 5
-          npm config set fetch-retry-mintimeout 10000
-          npm config set fetch-retry-maxtimeout 60000
-          npm config set audit false
-          npm config set fund false
-
       - name: Install dependencies
         run: |
-          echo "Installing dependencies..."
+          echo "📦 Installing dependencies..."
           npm ci --prefer-offline --no-audit --progress=false
         timeout-minutes: 10
-        env:
-          NODE_OPTIONS: '--max-old-space-size=6144'
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-          NPM_CONFIG_MAXSOCKETS: 3
 
       - name: Verify installation
         run: |
-          echo "✅ Dependencies installation completed"
+          echo "✅ Dependencies ready"
           echo "Node.js: $(node --version)"
           echo "npm: $(npm --version)"
-          echo "Packages installed: $(npm list --depth=0 | wc -l)"
 
   # ========================================
-  # CODE QUALITY & TESTING
+  # CODE QUALITY CHECKS
   # ========================================
   
   code-quality:
-    name: Code Quality Analysis
+    name: Code Quality
     runs-on: ubuntu-latest
     needs: setup
     
@@ -92,56 +77,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
+      - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
             node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
 
-      - name: Install dependencies if cache miss
+      - name: Install if cache miss
         run: |
-          if [ ! -d "node_modules" ] || [ ! "$(ls -A node_modules)" ]; then
-            echo "Installing dependencies..."
+          if [ ! -d "node_modules" ]; then
             npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "✅ Using cached dependencies"
           fi
-        timeout-minutes: 8
 
-      - name: Run ESLint
-        run: npm run lint || echo "ESLint not configured, skipping..."
+      - name: Lint code
+        run: npm run lint
         continue-on-error: true
 
-      - name: Run Prettier check
-        run: npm run format:check || echo "Prettier check not configured, skipping..."
+      - name: Format check
+        run: npm run format:check
         continue-on-error: true
 
-      - name: Run security audit
-        run: npm audit --audit-level=high || echo "Security audit completed"
+      - name: Security audit
+        run: npm audit --audit-level=moderate
         continue-on-error: true
-
-      - name: Upload code quality results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: code-quality-results
-          path: |
-            lint-results.json
-            .eslintcache
-          retention-days: 7
 
   # ========================================
-  # UNIT & INTEGRATION TESTS
+  # TEST SUITE
   # ========================================
 
   test-suite:
-    name: Test Suite
+    name: Tests
     runs-on: ubuntu-latest
     needs: setup
     
@@ -153,48 +121,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
+      - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
             node_modules
           key: ${{ needs.setup.outputs.cache-key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
 
-      - name: Install dependencies if cache miss
+      - name: Install if cache miss
         run: |
-          if [ ! -d "node_modules" ] || [ ! "$(ls -A node_modules)" ]; then
-            echo "Installing dependencies..."
+          if [ ! -d "node_modules" ]; then
             npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "✅ Using cached dependencies"
           fi
-        timeout-minutes: 5
 
       - name: Create test directories
         run: |
-          mkdir -p data/conversations
-          mkdir -p data/budgets
-          mkdir -p data/emergency
-          mkdir -p data/backups
-          mkdir -p test-results
-          mkdir -p coverage
+          mkdir -p {data/{conversations,budgets,emergency,backups},test-results,coverage,logs}
 
-      - name: Run Tests
-        run: |
-          if npm run | grep -q "test:ci"; then
-            npm run test:ci
-          elif npm run | grep -q "test"; then
-            npm run test
-          else
-            echo "No test script found, creating basic test structure..."
-            echo "✅ Test structure verified"
-          fi
-        timeout-minutes: 15
+      - name: Run tests
+        run: npm run test:ci
+        timeout-minutes: 10
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -207,24 +155,14 @@ jobs:
             logs/
           retention-days: 7
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        if: success() && hashFiles('coverage/lcov.info') != ''
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-        continue-on-error: true
-
   # ========================================
-  # PERFORMANCE & LOAD TESTING
+  # BUILD & PACKAGE
   # ========================================
 
-  performance-tests:
-    name: Performance Tests
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    needs: setup
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    needs: [code-quality, test-suite]
     
     steps:
       - name: Checkout repository
@@ -234,9 +172,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Restore dependencies cache
+      - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
@@ -244,81 +181,33 @@ jobs:
             node_modules
           key: ${{ needs.setup.outputs.cache-key }}
 
-      - name: Install dependencies if cache miss
+      - name: Install if cache miss
         run: |
-          if [ ! -d "node_modules" ] || [ ! "$(ls -A node_modules)" ]; then
-            echo "Installing dependencies..."
+          if [ ! -d "node_modules" ]; then
             npm ci --prefer-offline --no-audit --progress=false
-          else
-            echo "✅ Using cached dependencies"
           fi
+
+      - name: Build application
+        run: npm run build
         timeout-minutes: 5
 
-      - name: Build project
-        run: |
-          if npm run | grep -q "build"; then
-            npm run build
-          else
-            echo "No build script found, skipping build step..."
-          fi
-        timeout-minutes: 5
-
-      - name: Start test server
-        run: |
-          if npm run | grep -q "start"; then
-            npm start &
-            echo "Started server with PID: $!"
-            sleep 10
-          else
-            echo "No start script found, skipping server start..."
-          fi
-        env:
-          NODE_ENV: test
-          PORT: 3000
-
-      - name: Wait for server readiness
-        run: |
-          echo "Checking server readiness..."
-          for i in {1..15}; do
-            if curl -f http://localhost:3000/health 2>/dev/null || curl -f http://localhost:3000/ 2>/dev/null; then
-              echo "✅ Server is ready"
-              break
-            elif [ $i -eq 15 ]; then
-              echo "⚠️ Server readiness check timed out"
-            else
-              echo "Waiting for server... (attempt $i/15)"
-              sleep 2
-            fi
-          done
-
-      - name: Run performance tests
-        run: |
-          echo "Running performance tests..."
-          if npm run | grep -q "test:performance"; then
-            npm run test:performance
-          else
-            echo "Performance tests not configured yet, skipping..."
-          fi
-        continue-on-error: true
-
-      - name: Upload performance results
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: performance-results
+          name: build-artifacts
           path: |
-            performance-results/
-            load-test-results/
+            dist/
+            build/
           retention-days: 7
 
   # ========================================
   # DOCKER BUILD & PUSH
   # ========================================
 
-  docker-build:
+  docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: [code-quality, test-suite]
+    needs: build
     if: github.event_name != 'pull_request'
     
     permissions:
@@ -343,160 +232,52 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # ========================================
-  # SECURITY SCANNING
-  # ========================================
-
-  security-scan:
-    name: Security Scanning
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    if: github.event_name != 'pull_request'
-    
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-        continue-on-error: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('trivy-results.sarif') != ''
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
-        continue-on-error: true
-
-      - name: Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        continue-on-error: true
-
-  # ========================================
-  # STAGING DEPLOYMENT
+  # DEPLOYMENT
   # ========================================
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [performance-tests, docker-build, security-scan]
+    needs: docker
     if: github.ref == 'refs/heads/develop'
-    environment: 
-      name: staging
-      url: https://staging.yourdomain.com
+    environment: staging
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging..."
+          # Add your deployment commands here
 
-      - name: Deploy to staging environment
-        run: |
-          echo "🚀 Deploying to staging environment..."
-          echo "Image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          # Add your actual deployment commands here
-          
-      - name: Run smoke tests against staging
-        run: |
-          echo "🧪 Running smoke tests..."
-          if npm run | grep -q "test:smoke:staging"; then
-            npm run test:smoke:staging
-          else
-            echo "Smoke tests not configured yet, skipping..."
-          fi
-        env:
-          STAGING_URL: ${{ secrets.STAGING_URL }}
-          API_KEY: ${{ secrets.STAGING_API_KEY }}
+      - name: Smoke tests
+        run: npm run test:smoke:staging
         continue-on-error: true
-
-      - name: Update deployment status
-        run: |
-          echo "✅ Staging deployment completed successfully"
-
-  # ========================================
-  # PRODUCTION DEPLOYMENT
-  # ========================================
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [deploy-staging]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    environment:
-      name: production
-      url: https://yourdomain.com
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    environment: production
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production..."
+          # Add your deployment commands here
 
-      - name: Create pre-deployment backup
+      - name: Health check
         run: |
-          echo "💾 Creating pre-deployment backup..."
-          # Add your backup commands here
-          
-      - name: Deploy to production environment
-        run: |
-          echo "🚀 Deploying to production environment..."
-          echo "Release: ${{ github.event.release.tag_name }}"
-          echo "Image: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}"
-          # Add your actual deployment commands here
-          
-      - name: Run production health checks
-        run: |
-          echo "🏥 Running production health checks..."
-          # Add your health check commands here
-          sleep 30  # Allow time for deployment to stabilize
-          echo "✅ Health checks completed"
-        env:
-          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
-          API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "🎉 Production deployment successful!"
-          echo "Version: ${{ github.event.release.tag_name }}"
-          echo "Deployed at: $(date -u)"
-          # Add notification commands here (Slack, Discord, email, etc.)
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "❌ Production deployment failed - initiating rollback"
-          echo "Check the logs above for detailed error information"
-          # Add rollback commands here
-          # Example: kubectl rollout undo deployment/app
-          # Example: docker service update --rollback service-name
+          echo "🏥 Running health checks..."
+          # Add health check commands here
