@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./assets/breath-it-logo.svg" alt="Breath IT - Living Systems Technology" width="300"/>
+</div>
+
 # Agent Framework Platform
 
 <!-- 
@@ -324,4 +328,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **⭐ Star this repository if you find it helpful!**
 
 **🚀 Ready to build intelligent agents? [Get started now](./docs/08-User-Guides/Getting-Started.md)**
+
 
