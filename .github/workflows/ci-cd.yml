@@ -229,14 +229,14 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ========================================
-  # SECURITY SCANNING
+  # SECURITY SCANNING (Optional - Disabled due to billing limits)
   # ========================================
 
   security-scan:
     name: Security Scanning
     runs-on: ubuntu-latest
     needs: [docker-build]
-    if: github.event_name != 'pull_request'
+    if: false  # Temporarily disabled due to GitHub billing limits
     
     permissions:
       contents: read
@@ -278,7 +278,7 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [performance-tests, docker-build, security-scan]
+    needs: [performance-tests, docker-build]
     if: github.ref == 'refs/heads/develop'
     environment: 
       name: staging
