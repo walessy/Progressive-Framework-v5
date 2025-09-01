@@ -159,7 +159,7 @@ jobs:
           sleep 10
         env:
           NODE_ENV: test
-          PORT: 3001
+          PORT: 3000
 
       - name: Wait for server to be ready
         run: |
