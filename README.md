@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](./docs/)
-[![Version](https://img.shields.io/badge/version-v2.1.0-blue.svg)](#)
+[![Version](https://img.shields.io/badge/version-v5.0.0-blue.svg)](#)
 
 A comprehensive, production-ready framework for building intelligent agents with built-in monitoring, security, and scalability features.
 
@@ -324,3 +324,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **⭐ Star this repository if you find it helpful!**
 
 **🚀 Ready to build intelligent agents? [Get started now](./docs/08-User-Guides/Getting-Started.md)**
+
