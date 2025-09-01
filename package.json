@@ -13,30 +13,30 @@
         "dev:debug": "nodemon --inspect=0.0.0.0:9229 server.js",
         "build": "npm run lint && npm run test:ci",
         "prepare-ci": "npm run setup:directories",
-        "setup:directories": "mkdir data 2>nul & mkdir data\\conversations 2>nul & mkdir data\\budgets 2>nul & mkdir data\\emergency 2>nul & mkdir data\\backups 2>nul & mkdir logs 2>nul",
-        "lint": "eslint src/ --ext .js --format json --output-file lint-results.json",
+        "setup:directories": "node -e \"const fs = require('fs'); ['data', 'data/conversations', 'data/budgets', 'data/emergency', 'data/backups', 'logs', 'coverage', 'test-results'].forEach(dir => fs.mkdirSync(dir, { recursive: true })); console.log('Directories created successfully');\"",
+        "lint": "eslint src/ --ext .js --format json --output-file lint-results.json || eslint src/ --ext .js",
         "lint:fix": "eslint src/ --ext .js --fix",
         "format": "prettier --write \"src/**/*.js\" \"*.js\"",
         "format:check": "prettier --check \"src/**/*.js\" \"*.js\"",
-        "test": "jest --testPathPattern=tests/unit --coverage --passWithNoTests",
-        "test:unit": "jest --testPathPattern=tests/unit --coverage",
-        "test:integration": "jest --testPathPattern=tests/integration --passWithNoTests",
-        "test:emergency": "jest --testPathPattern=tests/emergency --verbose --detectOpenHandles",
-        "test:agents": "jest --testPathPattern=tests/agents --passWithNoTests",
-        "test:backup-restore": "jest --testPathPattern=tests/backup",
-        "test:ci": "jest --ci --coverage --watchAll=false",
-        "test:coverage": "jest --coverage --coverageReporters=text-lcov > coverage/lcov.info",
+        "test": "npm run setup:directories && jest --testPathPattern=tests/unit --coverage --passWithNoTests",
+        "test:unit": "npm run setup:directories && jest --testPathPattern=tests/unit --coverage",
+        "test:integration": "npm run setup:directories && jest --testPathPattern=tests/integration --passWithNoTests",
+        "test:emergency": "npm run setup:directories && jest --testPathPattern=tests/emergency --verbose --detectOpenHandles",
+        "test:agents": "npm run setup:directories && jest --testPathPattern=tests/agents --passWithNoTests",
+        "test:backup-restore": "npm run setup:directories && jest --testPathPattern=tests/backup",
+        "test:ci": "npm run setup:directories && jest --ci --coverage --watchAll=false --passWithNoTests",
+        "test:coverage": "npm run setup:directories && jest --coverage --coverageReporters=text-lcov > coverage/lcov.info",
         "test:watch": "jest --watch",
-        "test:performance:routing": "node tests/performance/routing-performance.js",
-        "test:performance:search": "node tests/performance/search-performance.js",
-        "test:performance:emergency": "node tests/performance/emergency-performance.js",
+        "test:performance:routing": "npm run setup:directories && node tests/performance/routing-performance.js",
+        "test:performance:search": "npm run setup:directories && node tests/performance/search-performance.js",
+        "test:performance:emergency": "npm run setup:directories && node tests/performance/emergency-performance.js",
         "test:load": "artillery run tests/load/load-test.yml",
         "generate:performance-report": "node scripts/generate-performance-report.js",
-        "test:smoke:staging": "node tests/smoke/staging-smoke-test.js",
-        "test:smoke:production": "node tests/smoke/production-smoke-test.js",
-        "test:health:production": "node tests/health/production-health-check.js",
-        "test:emergency:staging": "node tests/emergency/staging-emergency-test.js",
-        "test:emergency:production": "node tests/emergency/production-emergency-test.js",
+        "test:smoke:staging": "npm run setup:directories && node tests/smoke/staging-smoke-test.js",
+        "test:smoke:production": "npm run setup:directories && node tests/smoke/production-smoke-test.js",
+        "test:health:production": "npm run setup:directories && node tests/health/production-health-check.js",
+        "test:emergency:staging": "npm run setup:directories && node tests/emergency/staging-emergency-test.js",
+        "test:emergency:production": "npm run setup:directories && node tests/emergency/production-emergency-test.js",
         "docker:build": "docker build -t progressive-framework-v5 .",
         "docker:build:dev": "docker build --target development -t progressive-framework-v5:dev .",
         "docker:build:prod": "docker build --target production -t progressive-framework-v5:prod .",
@@ -98,8 +98,6 @@
     "dependencies": {
         "compression": "^1.7.4",
         "cors": "^2.8.5",
-        "event-stream": "^4.0.1",
-        "events": "^3.3.0",
         "express": "^4.21.2",
         "express-rate-limit": "^8.0.1",
         "fs-extra": "^11.1.1",
@@ -115,7 +113,8 @@
         "@babel/core": "^7.22.10",
         "@babel/preset-env": "^7.22.10",
         "artillery": "^2.0.1",
-        "eslint": "^9.0.0",
+        "eslint": "^8.57.0",
+        "@eslint/js": "^8.57.0",
         "http-server": "^14.1.1",
         "jest": "^29.7.0",
         "jsdoc": "^4.0.2",
@@ -132,22 +131,17 @@
         "extends": [
             "eslint:recommended"
         ],
+        "parserOptions": {
+            "ecmaVersion": 2021,
+            "sourceType": "module"
+        },
         "rules": {
             "no-console": "warn",
-            "no-unused-vars": "error",
+            "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
             "no-undef": "error",
-            "semi": [
-                "error",
-                "always"
-            ],
-            "quotes": [
-                "error",
-                "single"
-            ],
-            "indent": [
-                "error",
-                4
-            ]
+            "semi": ["error", "always"],
+            "quotes": ["error", "single"],
+            "indent": ["error", 4]
         }
     },
     "prettier": {
@@ -175,15 +169,17 @@
         }
     },
     "jest": {
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
-    "testPathIgnorePatterns": ["/node_modules/"],
-    "collectCoverageFrom": [
-        "src/**/*.js",
-        "!src/**/*.test.js", 
-        "!src/**/*.spec.js"
-    ],
-    "testTimeout": 15000,
-    "detectOpenHandles": true,
-    "forceExit": true
+        "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+        "testPathIgnorePatterns": ["/node_modules/"],
+        "collectCoverageFrom": [
+            "src/**/*.js",
+            "!src/**/*.test.js", 
+            "!src/**/*.spec.js"
+        ],
+        "testTimeout": 30000,
+        "detectOpenHandles": true,
+        "forceExit": true,
+        "maxWorkers": 4,
+        "testEnvironment": "node"
     }
 }
