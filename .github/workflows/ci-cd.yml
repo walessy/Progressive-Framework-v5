@@ -297,9 +297,6 @@ jobs:
         run: |
           echo "Running smoke tests..."
           # npm run test:smoke:staging || echo "Smoke tests not configured yet"
-        env:
-          STAGING_URL: ${{ secrets.STAGING_URL }}
-          API_KEY: ${{ secrets.STAGING_API_KEY }}
         continue-on-error: true
 
       - name: Update deployment status
@@ -336,9 +333,6 @@ jobs:
         run: |
           echo "Running production health checks..."
           # Add your health check commands here
-        env:
-          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
-          API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
 
       - name: Notify deployment success
         if: success()
