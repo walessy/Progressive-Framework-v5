@@ -1,17 +1,19 @@
-name: Progressive Framework V5 - CI/CD Pipeline
+name: Progressive Framework V5 - Enhanced CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'feature/*', 'hotfix/*' ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   release:
     types: [ published ]
 
 env:
   NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
   REGISTRY: ghcr.io
   IMAGE_NAME: progressive-framework-v5
+  KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
 
 jobs:
   # ========================================
@@ -23,6 +25,98 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       cache-key: ${{ steps.cache-key.outputs.key }}
+      version: ${{ steps.version.outputs.version }}
+      short-sha: ${{ steps.version.outputs.short-sha }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate version and cache key
+        id: cache-key
+        run: |
+          echo "key=deps-${{ hashFiles('package-lock.json', 'requirements.txt') }}-${{ runner.os }}-${{ env.NODE_VERSION }}" >> $GITHUB_OUTPUT
+
+      - name: Extract version info
+        id: version
+        run: |
+          SHORT_SHA=${GITHUB_SHA::8}
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          
+          # Generate clean version for Docker tags
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ "$BRANCH_NAME" == "main" ]]; then
+            VERSION="latest"
+          elif [[ "$BRANCH_NAME" == "develop" ]]; then
+            VERSION="develop-${SHORT_SHA}"
+          else
+            # Clean branch name for Docker tag compatibility
+            CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9]/-/g' | tr '[:upper:]' '[:lower:]')
+            VERSION="${CLEAN_BRANCH}-${SHORT_SHA}"
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "🏷️ Version: ${VERSION}"
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            ~/.cache/pip
+            node_modules
+            venv
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            deps-${{ hashFiles('package-lock.json', 'requirements.txt') }}-${{ runner.os }}-
+
+      - name: Install Node.js dependencies
+        run: |
+          echo "📦 Installing Node.js dependencies..."
+          npm ci --prefer-offline --no-audit --progress=false
+        timeout-minutes: 10
+
+      - name: Install Python dependencies
+        run: |
+          echo "🐍 Installing Python dependencies..."
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+        timeout-minutes: 10
+
+      - name: Verify installation
+        run: |
+          echo "✅ Dependencies ready"
+          echo "Node.js: $(node --version)"
+          echo "npm: $(npm --version)"
+          echo "Python: $(python --version)"
+
+  # ========================================
+  # SECURITY SCANNING
+  # ========================================
+  
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: setup
     
     steps:
       - name: Checkout repository
@@ -32,33 +126,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Generate cache key
-        id: cache-key
-        run: echo "key=npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-${{ env.NODE_VERSION }}" >> $GITHUB_OUTPUT
-
-      - name: Cache dependencies
+      - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
             node_modules
-          key: ${{ steps.cache-key.outputs.key }}
-          restore-keys: |
-            npm-${{ hashFiles('package-lock.json') }}-${{ runner.os }}-
+          key: ${{ needs.setup.outputs.cache-key }}
 
-      - name: Install dependencies
+      - name: Install if cache miss
         run: |
-          echo "📦 Installing dependencies..."
-          npm ci --prefer-offline --no-audit --progress=false
-        timeout-minutes: 10
+          if [ ! -d "node_modules" ]; then
+            npm ci --prefer-offline --no-audit --progress=false
+          fi
 
-      - name: Verify installation
+      - name: Run npm audit
         run: |
-          echo "✅ Dependencies ready"
-          echo "Node.js: $(node --version)"
-          echo "npm: $(npm --version)"
+          echo "🔍 Running npm security audit..."
+          npm audit --audit-level=moderate || echo "⚠️ Security vulnerabilities found"
+
+      - name: Run Snyk Security Test
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
 
   # ========================================
   # CODE QUALITY CHECKS
@@ -78,12 +178,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
+            ~/.cache/pip
             node_modules
+            venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Install if cache miss
@@ -91,27 +198,74 @@ jobs:
           if [ ! -d "node_modules" ]; then
             npm ci --prefer-offline --no-audit --progress=false
           fi
+          if [ ! -d "venv" ]; then
+            python -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+          fi
 
-      - name: Lint code
-        run: npm run lint
-        continue-on-error: true
+      - name: ESLint
+        run: |
+          echo "🧹 Running ESLint..."
+          npm run lint || echo "⚠️ Linting issues found"
 
-      - name: Format check
-        run: npm run format:check
-        continue-on-error: true
+      - name: Prettier check
+        run: |
+          echo "💅 Checking code formatting..."
+          npm run format:check || echo "⚠️ Formatting issues found"
 
-      - name: Security audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+      - name: Python linting (Flake8)
+        run: |
+          echo "🐍 Running Python linting..."
+          source venv/bin/activate
+          flake8 agents/ --max-line-length=88 --ignore=E203,W503 || echo "⚠️ Python linting issues found"
+
+      - name: TypeScript type check
+        run: |
+          echo "📝 Running TypeScript type checking..."
+          npm run type-check || echo "⚠️ Type checking issues found"
 
   # ========================================
   # TEST SUITE
   # ========================================
 
   test-suite:
-    name: Tests
+    name: Test Suite
     runs-on: ubuntu-latest
     needs: setup
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      mongodb:
+        image: mongo:6.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test_user
+          MONGO_INITDB_ROOT_PASSWORD: test_password
+        ports:
+          - 27017:27017
     
     steps:
       - name: Checkout repository
@@ -122,12 +276,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Restore dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.npm
+            ~/.cache/pip
             node_modules
+            venv
           key: ${{ needs.setup.outputs.cache-key }}
 
       - name: Install if cache miss
@@ -135,20 +296,58 @@ jobs:
           if [ ! -d "node_modules" ]; then
             npm ci --prefer-offline --no-audit --progress=false
           fi
+          if [ ! -d "venv" ]; then
+            python -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+          fi
 
       - name: Create test directories
         run: |
           mkdir -p {data/{conversations,budgets,emergency,backups},test-results,coverage,logs}
 
-      - name: Run tests
-        run: npm run test:ci
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgresql://test_user:test_password@localhost:5432/test_db" >> .env.test
+          echo "REDIS_URL=redis://localhost:6379" >> .env.test
+          echo "MONGODB_URL=mongodb://test_user:test_password@localhost:27017/test_db" >> .env.test
+
+      - name: Run database migrations
+        run: |
+          echo "🗄️ Running database migrations..."
+          npm run migrate:test || echo "⚠️ Migration issues"
+
+      - name: Run unit tests
+        run: |
+          echo "🧪 Running unit tests..."
+          npm run test:unit
         timeout-minutes: 10
+
+      - name: Run integration tests
+        run: |
+          echo "🔗 Running integration tests..."
+          npm run test:integration
+        timeout-minutes: 15
+
+      - name: Run agent tests
+        run: |
+          echo "🤖 Running agent tests..."
+          source venv/bin/activate
+          python -m pytest agents/tests/ -v --cov=agents --cov-report=xml
+        timeout-minutes: 10
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/clover.xml,./coverage.xml
+          fail_ci_if_error: false
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results
+          name: test-results-${{ needs.setup.outputs.short-sha }}
           path: |
             test-results/
             coverage/
@@ -160,7 +359,7 @@ jobs:
   # ========================================
 
   build:
-    name: Build
+    name: Build Application
     runs-on: ubuntu-latest
     needs: [code-quality, test-suite]
     
@@ -187,17 +386,42 @@ jobs:
             npm ci --prefer-offline --no-audit --progress=false
           fi
 
-      - name: Build application
-        run: npm run build
+      - name: Build main application
+        run: |
+          echo "🏗️ Building main application..."
+          npm run build
+        timeout-minutes: 10
+        env:
+          NODE_ENV: production
+
+      - name: Build context agents
+        run: |
+          echo "🤖 Building context agents..."
+          npm run build:agents
         timeout-minutes: 5
+
+      - name: Generate build info
+        run: |
+          echo "📋 Generating build information..."
+          cat > dist/build-info.json << EOF
+          {
+            "version": "${{ needs.setup.outputs.version }}",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "buildNumber": "${{ github.run_number }}",
+            "environment": "production"
+          }
+          EOF
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-${{ needs.setup.outputs.short-sha }}
           path: |
             dist/
             build/
+            agents/dist/
           retention-days: 7
 
   # ========================================
@@ -207,16 +431,33 @@ jobs:
   docker:
     name: Docker Build & Push
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, setup, security-scan]
     if: github.event_name != 'pull_request'
     
     permissions:
       contents: read
       packages: write
 
+    strategy:
+      matrix:
+        component: [
+          { name: 'main-app', dockerfile: 'Dockerfile', context: '.', port: '3000' },
+          { name: 'mca-agent', dockerfile: 'agents/mca/Dockerfile', context: 'agents/mca', port: '8000' },
+          { name: 'npa-agent', dockerfile: 'agents/npa/Dockerfile', context: 'agents/npa', port: '8000' },
+          { name: 'wpa-agent', dockerfile: 'agents/wpa/Dockerfile', context: 'agents/wpa', port: '8000' }
+        ]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ needs.setup.outputs.short-sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -225,60 +466,289 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component.name }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
-            type=raw,value={{sha}},enable={{is_default_branch}}
+            type=raw,value=${{ needs.setup.outputs.version }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Progressive Framework V5 - ${{ matrix.component.name }}
+            org.opencontainers.image.description=Progressive Framework V5 ${{ matrix.component.name }} component
+            org.opencontainers.image.vendor=Progressive Framework Team
+            org.opencontainers.image.version=${{ needs.setup.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created={{date 'YYYY-MM-DDTHH:mm:ssZ'}}
             
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ${{ matrix.component.context }}
+          file: ${{ matrix.component.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.setup.outputs.version }}
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VCS_REF=${{ github.sha }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component.name }}:${{ needs.setup.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.component.name }}.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.component.name }}.sarif'
 
   # ========================================
-  # DEPLOYMENT
+  # DEPLOYMENT STAGING
   # ========================================
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: docker
+    needs: [docker, setup]
     if: github.ref == 'refs/heads/develop'
-    environment: staging
+    environment: 
+      name: staging
+      url: https://staging.progressive-framework.com
     
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
       - name: Deploy to staging
         run: |
-          echo "🚀 Deploying to staging..."
-          # Add your deployment commands here
+          echo "🚀 Deploying to staging environment..."
+          
+          # Update image tags in manifests
+          sed -i "s|{{IMAGE_TAG}}|${{ needs.setup.outputs.version }}|g" k8s/staging/*.yml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" k8s/staging/*.yml
+          sed -i "s|{{REPOSITORY}}|${{ github.repository }}|g" k8s/staging/*.yml
+          
+          # Apply database migrations
+          kubectl apply -f k8s/migrations/ -n progressive-framework-staging
+          kubectl wait --for=condition=complete --timeout=300s job/db-migration -n progressive-framework-staging
+          
+          # Deploy applications
+          kubectl apply -f k8s/staging/ -n progressive-framework-staging
+          
+          # Wait for deployments
+          kubectl rollout status deployment/progressive-framework-v5 -n progressive-framework-staging --timeout=600s
+          kubectl rollout status deployment/mca-agent -n progressive-framework-staging --timeout=600s
+          kubectl rollout status deployment/npa-agent -n progressive-framework-staging --timeout=600s
+          kubectl rollout status deployment/wpa-agent -n progressive-framework-staging --timeout=600s
 
-      - name: Smoke tests
-        run: npm run test:smoke:staging
+      - name: Run smoke tests
+        run: |
+          echo "💨 Running smoke tests..."
+          sleep 30  # Allow services to stabilize
+          npm run test:smoke:staging
         continue-on-error: true
+        timeout-minutes: 5
+
+      - name: Deploy status notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ========================================
+  # DEPLOYMENT PRODUCTION
+  # ========================================
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: docker
-    if: github.ref == 'refs/heads/main'
-    environment: production
+    needs: [docker, setup]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    environment: 
+      name: production
+      url: https://progressive-framework.com
     
     steps:
-      - name: Deploy to production
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
         run: |
-          echo "🚀 Deploying to production..."
-          # Add your deployment commands here
+          echo "${{ secrets.KUBE_CONFIG_PROD }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Pre-deployment backup
+        run: |
+          echo "💾 Creating pre-deployment backup..."
+          kubectl create job backup-pre-deploy-$(date +%s) --from=cronjob/database-backup -n progressive-framework-prod
+          sleep 60  # Allow backup to start
+
+      - name: Blue-Green Deployment
+        run: |
+          echo "🔄 Starting Blue-Green deployment..."
+          
+          # Update image tags in manifests
+          sed -i "s|{{IMAGE_TAG}}|${{ needs.setup.outputs.version }}|g" k8s/production/*.yml
+          sed -i "s|{{REGISTRY}}|${{ env.REGISTRY }}|g" k8s/production/*.yml
+          sed -i "s|{{REPOSITORY}}|${{ github.repository }}|g" k8s/production/*.yml
+          
+          # Deploy green version
+          kubectl apply -f k8s/production/ -n progressive-framework-prod
+          
+          # Wait for green deployment
+          kubectl rollout status deployment/progressive-framework-v5 -n progressive-framework-prod --timeout=600s
+          kubectl rollout status deployment/mca-agent -n progressive-framework-prod --timeout=600s
+          kubectl rollout status deployment/npa-agent -n progressive-framework-prod --timeout=600s
+          kubectl rollout status deployment/wpa-agent -n progressive-framework-prod --timeout=600s
+
+      - name: Run database migrations
+        run: |
+          echo "🗄️ Running production database migrations..."
+          kubectl apply -f k8s/migrations/ -n progressive-framework-prod
+          kubectl wait --for=condition=complete --timeout=300s job/db-migration -n progressive-framework-prod
 
       - name: Health check
         run: |
-          echo "🏥 Running health checks..."
-          # Add health check commands here
+          echo "🏥 Running production health checks..."
+          
+          # Wait for services to be ready
+          sleep 60
+          
+          # Check main application
+          kubectl run health-check --rm -i --restart=Never --image=curlimages/curl \
+            -- curl -f https://progressive-framework.com/health
+          
+          # Check agents
+          kubectl run agent-health-check --rm -i --restart=Never --image=curlimages/curl \
+            -- curl -f https://agents.progressive-framework.com/health
+          
+          echo "✅ Health checks passed"
+
+      - name: Run integration tests
+        run: |
+          echo "🔗 Running production integration tests..."
+          npm run test:integration:production
+        timeout-minutes: 10
+
+      - name: Performance monitoring setup
+        run: |
+          echo "📊 Setting up performance monitoring..."
+          kubectl apply -f k8s/monitoring/production-alerts.yml
+          
+      - name: Deployment success notification
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'success'
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          custom_payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "🚀 *Production Deployment Successful*\n*Version:* ${{ needs.setup.outputs.version }}\n*Commit:* ${{ github.sha }}\n*Environment:* Production"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Application"
+                      },
+                      "url": "https://progressive-framework.com"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Deployment failure notification
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'failure'
+          channel: '#alerts'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+
+  # ========================================
+  # POST-DEPLOYMENT MONITORING
+  # ========================================
+
+  post-deployment-monitoring:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-production, setup]
+    if: github.ref == 'refs/heads/main' && success()
+    
+    steps:
+      - name: Setup monitoring
+        run: |
+          echo "📊 Setting up post-deployment monitoring..."
+          # Add your monitoring setup here
+          
+      - name: Performance baseline
+        run: |
+          echo "⚡ Establishing performance baseline..."
+          # Add performance monitoring commands
+          
+      - name: Alert configuration
+        run: |
+          echo "🚨 Configuring production alerts..."
+          # Add alert configuration commands
+
+  # ========================================
+  # CLEANUP
+  # ========================================
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-production, deploy-staging]
+    if: always()
+    
+    steps:
+      - name: Clean up old images
+        run: |
+          echo "🧹 Cleaning up old container images..."
+          # Add cleanup commands for old images
+          
+      - name: Archive logs
+        run: |
+          echo "📚 Archiving deployment logs..."
+          # Add log archival commands
