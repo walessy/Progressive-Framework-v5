@@ -1,6 +1,10 @@
-<div align="center">
+<div align="centNoneer">
   <img src="./assets/animated_breath_it_logo.svg" alt="Breath IT - Living Systems Technology" width="600"/>
 </div>
+
+Noe of this was coded by me but driven by me. It took about a week.
+I am not seeking validation but merely democratizing AI agent systems.
+
 # Agent Framework Platform - Archetypal Model
 
 <!-- 
@@ -400,3 +404,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **🏛️ Ready to build your own agent framework? [Start with the System Overview](./docs/01-Core-System/System-Overview.md)**
 
 **📋 Use as Template: Click the "Use this template" button to create your own implementation**
+
